@@ -9,7 +9,8 @@ SOURCES = \
 		../src/main.cc \
 		../src/screen.cc \
 		../src/shared_data.cc \
-		../src/screen_debug.cc
+		../src/screen_debug.cc \
+		../third_party/3d_collision_helpers/src/sc_sacd.cpp
 
 HEADERS = \
 		../src/screen.h \
@@ -19,7 +20,7 @@ HEADERS = \
 OBJDIR = objdir
 OUTDIR = out
 
-OBJECTS = $(addprefix ${OBJDIR}/,$(subst ..,PREVDIR,$(subst .cc,.cc.o,${SOURCES})))
+OBJECTS = $(addprefix ${OBJDIR}/,$(subst ..,PREVDIR,$(subst .cpp,.cpp.o,$(subst .cc,.cc.o,${SOURCES}))))
 
 EMSDK_ENV_SH ?= ${HOME}/git/emsdk/emsdk_env.sh
 
@@ -40,6 +41,9 @@ ${OUTDIR}/GanderBattle.html: ./raylib/libraylib.a ./raylib/raylib.h ./raylib/ray
 .SECONDEXPANSION:
 
 ${OBJDIR}/%.cc.o: $$(subst PREVDIR,..,%.cc) ${HEADERS}
+	@mkdir -p "$(dir $@)"
+	${CXX} -std=c++20 -I ./raylib -c ${OTHER_FLAGS} -o $@ $<
+${OBJDIR}/%.cpp.o: $$(subst PREVDIR,..,%.cpp) ${HEADERS}
 	@mkdir -p "$(dir $@)"
 	${CXX} -std=c++20 -I ./raylib -c ${OTHER_FLAGS} -o $@ $<
 

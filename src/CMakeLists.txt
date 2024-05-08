@@ -48,3 +48,11 @@ find_package(raylib 5.0 REQUIRED)
 
 target_link_libraries(GanderBattle PUBLIC raylib)
 target_include_directories(GanderBattle PUBLIC ${raylib_INCLUDE_DIRS})
+
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/3d_collision_helpers/CMakeLists.txt")
+  message(FATAL_ERROR "3d_collision_helpers not found, please run \"git submodule update --init\"!")
+else()
+  add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/3d_collision_helpers" "${CMAKE_CURRENT_BINARY_DIR}/3d_collision_helpers")
+  target_link_libraries(GanderBattle PUBLIC SC_3D_CollisionDetectionHelpers)
+  target_include_directories(GanderBattle PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/3d_collision_helpers/src")
+endif()

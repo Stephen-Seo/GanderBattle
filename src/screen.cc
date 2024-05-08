@@ -144,7 +144,7 @@ void ScreenStack::handle_pending_actions() {
         // Intentionally left blank.
         break;
       default:
-        assert(false); // Unreachable.
+        assert(false);  // Unreachable.
         break;
     }
     actions.pop_front();

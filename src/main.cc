@@ -16,18 +16,18 @@
 ScreenStack *global_screen_stack_ptr = nullptr;
 
 extern "C" {
-  EM_BOOL resize_event_callback(int event_type, const EmscriptenUiEvent *event,
-                                void *ud) {
-    if (event_type == EMSCRIPTEN_EVENT_RESIZE) {
-      SetWindowSize(call_js_get_canvas_width(), call_js_get_canvas_height());
-    }
-    return false;
+EM_BOOL resize_event_callback(int event_type, const EmscriptenUiEvent *event,
+                              void *ud) {
+  if (event_type == EMSCRIPTEN_EVENT_RESIZE) {
+    SetWindowSize(call_js_get_canvas_width(), call_js_get_canvas_height());
   }
+  return false;
+}
 
-  void main_loop_update(void *ud) {
-    global_screen_stack_ptr->update(GetFrameTime());
-    global_screen_stack_ptr->draw();
-  }
+void main_loop_update(void *ud) {
+  global_screen_stack_ptr->update(GetFrameTime());
+  global_screen_stack_ptr->draw();
+}
 }
 #endif
 
@@ -43,8 +43,8 @@ int main(int argc, char **argv) {
   global_screen_stack_ptr = stack.get();
   SetWindowSize(call_js_get_canvas_width(), call_js_get_canvas_height());
 
-  emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, nullptr,
-                                 false, resize_event_callback);
+  emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, nullptr, false,
+                                 resize_event_callback);
   emscripten_set_main_loop_arg(main_loop_update, nullptr, 0, 1);
 #else
 
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
   {
     auto stack = ScreenStack::new_instance();
 
-    while(!WindowShouldClose()) {
+    while (!WindowShouldClose()) {
       stack->update(GetFrameTime());
       stack->draw();
     }

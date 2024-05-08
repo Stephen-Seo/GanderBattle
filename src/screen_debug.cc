@@ -7,9 +7,7 @@ DebugScreen::DebugScreen(std::weak_ptr<ScreenStack> stack) : Screen(stack) {}
 
 DebugScreen::~DebugScreen() {}
 
-bool DebugScreen::update(float dt, bool screen_resized) {
-  return false;
-}
+bool DebugScreen::update(float dt, bool screen_resized) { return false; }
 
 bool DebugScreen::draw(RenderTexture *render_texture) {
   BeginTextureMode(*render_texture);

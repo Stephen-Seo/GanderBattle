@@ -5,7 +5,7 @@
 #include "screen.h"
 
 class DebugScreen : public Screen {
-public:
+ public:
   DebugScreen(std::weak_ptr<ScreenStack> stack);
   virtual ~DebugScreen();
 
@@ -13,8 +13,7 @@ public:
 
   virtual bool draw(RenderTexture* render_texture);
 
-private:
-
+ private:
 };
 
 #endif

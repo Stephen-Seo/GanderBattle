@@ -17,6 +17,8 @@ constexpr float SPHERE_DROP_ACC = 9.8F;
 constexpr float SPACE_WIDTH = 2.5F;
 constexpr float SPACE_DEPTH = 2.5F;
 
+constexpr float FLOOR_TIME_MAX = 1.0F;
+
 class BattleScreen : public Screen {
  public:
   BattleScreen(std::weak_ptr<ScreenStack> stack);
@@ -28,11 +30,13 @@ class BattleScreen : public Screen {
  private:
   Camera3D camera;
   float camera_orbit_timer;
+  float floor_timer;
   SC_SACD_Sphere sphere[2];
   SC_SACD_Vec3 sphere_vel[2];
   SC_SACD_Vec3 sphere_acc[2];
   SC_SACD_Vec3 sphere_touch_point[2];
   SC_SACD_Vec3 sphere_prev_pos[2];
+  SC_SACD_AABB_Box floor_box;
   bool sphere_collided;
 };
 

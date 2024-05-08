@@ -17,7 +17,8 @@ BattleScreen::BattleScreen(std::weak_ptr<ScreenStack> stack)
       sphere_vel{{1.105F, 1.0F, 3.3F}, {2.105F, 1.0F, 2.3F}},
       sphere_acc{{0.0F, -SPHERE_DROP_ACC, 0.0F},
                  {0.0F, -SPHERE_DROP_ACC, 0.0F}},
-      sphere_touch_point{{0.0F, 0.0F, 0.0F}, {0.0F, 0.0F, 0.0F}} {
+      sphere_touch_point{{0.0F, 0.0F, 0.0F}, {0.0F, 0.0F, 0.0F}},
+      floor_box{0.0F, -1.0F, 0.0F, 10.0F, 2.0F, 10.0F} {
   camera.up.x = 0.0F;
   camera.up.y = 1.0F;
   camera.up.z = 0.0F;
@@ -43,6 +44,8 @@ bool BattleScreen::update(float dt, bool screen_resized) {
   if (camera_orbit_timer > CAMERA_ORBIT_TIME) {
     camera_orbit_timer -= CAMERA_ORBIT_TIME;
   }
+
+  floor_timer += dt;
 
   camera.position.z = std::cos(camera_orbit_timer / CAMERA_ORBIT_TIME *
                                std::numbers::pi_v<float> * 2.0F) *
@@ -115,12 +118,13 @@ bool BattleScreen::update(float dt, bool screen_resized) {
       sphere_vel[idx].x = -std::abs(sphere_vel[idx].x);
     }
 
-    if (sphere[idx].y - sphere[idx].radius < 0.0F) {
+    if (SC_SACD_Sphere_AABB_Box_Collision(sphere[idx], floor_box)) {
       sphere_touch_point[idx].x = sphere[idx].x;
       sphere_touch_point[idx].y = sphere_prev_pos[idx].y - sphere[idx].radius;
       sphere_touch_point[idx].z = sphere[idx].z;
       sphere[idx].y = sphere_prev_pos[idx].y;
       sphere_vel[idx].y = std::abs(sphere_vel[idx].y);
+      floor_timer = 0.0F;
     }
 
     if (sphere[idx].z - sphere[idx].radius < -SPACE_DEPTH) {
@@ -140,8 +144,15 @@ bool BattleScreen::draw(RenderTexture *render_texture) {
   ClearBackground(BLUE);
   BeginMode3D(camera);
 
+  unsigned char floor_red;
+  if (floor_timer >= 0 && floor_timer < FLOOR_TIME_MAX) {
+    floor_red = (unsigned char)(floor_timer / FLOOR_TIME_MAX * 255.0F);
+  } else {
+    floor_red = 255;
+  }
   DrawPlane(Vector3{0.0F, -0.01F, 0.0F},
-            Vector2{SPACE_WIDTH * 2.0F, SPACE_DEPTH * 2.0F}, RAYWHITE);
+            Vector2{SPACE_WIDTH * 2.0F, SPACE_DEPTH * 2.0F},
+            Color{floor_red, 255, 255, 255});
   DrawGrid(20, 0.2F);
   DrawSphere(Vector3{sphere[0].x, sphere[0].y, sphere[0].z}, sphere[0].radius,
              GREEN);

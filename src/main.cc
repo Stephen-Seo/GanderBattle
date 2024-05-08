@@ -11,6 +11,7 @@
 
 // Local includes.
 #include "screen.h"
+#include "screen_battle.h"
 
 #ifdef __EMSCRIPTEN__
 ScreenStack *global_screen_stack_ptr = nullptr;
@@ -40,6 +41,7 @@ int main(int argc, char **argv) {
 
 #ifdef __EMSCRIPTEN__
   auto stack = ScreenStack::new_instance();
+  stack->push_constructing_screen<BattleScreen>();
   global_screen_stack_ptr = stack.get();
   SetWindowSize(call_js_get_canvas_width(), call_js_get_canvas_height());
 
@@ -52,6 +54,7 @@ int main(int argc, char **argv) {
 
   {
     auto stack = ScreenStack::new_instance();
+    stack->push_constructing_screen<BattleScreen>();
 
     while (!WindowShouldClose()) {
       stack->update(GetFrameTime());

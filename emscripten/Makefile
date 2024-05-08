@@ -10,12 +10,15 @@ SOURCES = \
 		../src/screen.cc \
 		../src/shared_data.cc \
 		../src/screen_debug.cc \
+		../src/screen_battle.cc \
 		../third_party/3d_collision_helpers/src/sc_sacd.cpp
 
 HEADERS = \
 		../src/screen.h \
 		../src/shared_data.h \
-		../src/screen_debug.h
+		../src/screen_debug.h \
+		../src/screen_battle.h \
+		../third_party/3d_collision_helpers/src/sc_sacd.h
 
 OBJDIR = objdir
 OUTDIR = out

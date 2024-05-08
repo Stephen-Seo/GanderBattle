@@ -1,0 +1,48 @@
+ifdef RELEASE
+	OTHER_FLAGS = -DNDEBUG -O3
+else
+	OTHER_FLAGS = -Og
+endif
+
+SOURCES = \
+		../src/ems.cc \
+		../src/main.cc \
+		../src/screen.cc \
+		../src/screen_debug.cc
+
+HEADERS = \
+		../src/screen.h \
+		../src/screen_debug.h
+
+OBJDIR = objdir
+OUTDIR = out
+
+OBJECTS = $(addprefix ${OBJDIR}/,$(subst ..,PREVDIR,$(subst .cc,.cc.o,${SOURCES})))
+
+EMSDK_ENV_SH ?= ${HOME}/git/emsdk/emsdk_env.sh
+
+CXX = source ${EMSDK_ENV_SH} &>/dev/null && em++
+
+all: ${OUTDIR}/GanderBattle.html
+
+${OUTDIR}/GanderBattle.html: ./raylib/libraylib.a ./raylib/raylib.h ./raylib/raymath.h ${OBJECTS} ${HEADERS}
+	@mkdir -p ${OUTDIR}
+	${CXX} -std=c++20 -o ${OUTDIR}/GanderBattle.html \
+		-s USE_GLFW=3 -Iraylib -Lraylib -lraylib \
+		-sEXPORTED_FUNCTIONS=_main \
+		-sEXPORTED_RUNTIME_METHODS=ccall \
+		${OTHER_FLAGS} \
+		${OBJECTS}
+	cd ${OUTDIR} && ln -s GanderBattle.html index.html
+
+.SECONDEXPANSION:
+
+${OBJDIR}/%.cc.o: $$(subst PREVDIR,..,%.cc) ${HEADERS}
+	@mkdir -p "$(dir $@)"
+	${CXX} -std=c++20 -I ./raylib -c ${OTHER_FLAGS} -o $@ $<
+
+.PHONY: clean
+
+clean:
+	rm -rf ${OBJDIR}
+	rm -rf ${OUTDIR}

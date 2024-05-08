@@ -3,6 +3,8 @@ project(GanderBattle CXX)
 
 set(GanderBattle_SOURCES
   "${CMAKE_CURRENT_SOURCE_DIR}/main.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/screen.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/screen_debug.cc"
 )
 
 add_executable(GanderBattle ${GanderBattle_SOURCES})
@@ -40,3 +42,8 @@ $<IF:$<CONFIG:Debug>,-Og,-fno-delete-null-pointer-checks -fno-strict-overflow -f
 )
 
 target_compile_features(GanderBattle PUBLIC cxx_std_20)
+
+find_package(raylib 5.0 REQUIRED)
+
+target_link_libraries(GanderBattle PUBLIC raylib)
+target_include_directories(GanderBattle PUBLIC ${raylib_INCLUDE_DIRS})

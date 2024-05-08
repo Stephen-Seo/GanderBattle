@@ -1,7 +1,7 @@
 ifdef RELEASE
-	OTHER_FLAGS = -DNDEBUG -O3
+	OTHER_FLAGS = -DNDEBUG -O3 -I../third_party/3d_collision_helpers/src
 else
-	OTHER_FLAGS = -Og
+	OTHER_FLAGS = -Og -I../third_party/3d_collision_helpers/src
 endif
 
 SOURCES = \
@@ -39,7 +39,7 @@ ${OUTDIR}/GanderBattle.html: ./raylib/libraylib.a ./raylib/raylib.h ./raylib/ray
 		-sEXPORTED_RUNTIME_METHODS=ccall \
 		${OTHER_FLAGS} \
 		${OBJECTS}
-	cd ${OUTDIR} && ln -s GanderBattle.html index.html
+	cd ${OUTDIR} && ln -sf GanderBattle.html index.html
 
 .SECONDEXPANSION:
 

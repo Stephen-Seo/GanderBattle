@@ -69,18 +69,10 @@ bool BattleScreen::update(float dt, bool screen_resized) {
   if (sphere_collided && !SC_SACD_Sphere_Collision(sphere[0], sphere[1])) {
     sphere_collided = false;
   } else if (SC_SACD_Sphere_Collision(sphere[0], sphere[1])) {
-    SC_SACD_Vec3 normal =
-        SC_SACD_Vec3{sphere[0].x - sphere[1].x, sphere[0].y - sphere[1].y,
-                     sphere[0].z - sphere[1].z};
-    float normal_len = SC_SACD_Vec3_Length(normal);
-    normal.x /= normal_len;
-    normal.y /= normal_len;
-    normal.z /= normal_len;
+    SC_SACD_Vec3 normal{sphere[0].x - sphere[1].x, sphere[0].y - sphere[1].y,
+                        sphere[0].z - sphere[1].z};
 
-    sphere_vel[0].x = -sphere_vel[0].x;
-    sphere_vel[0].z = -sphere_vel[0].z;
-    sphere_vel[1].x = -sphere_vel[1].x;
-    sphere_vel[1].z = -sphere_vel[1].z;
+    // Move spheres to point before collision.
 
     sphere[0].x = sphere_prev_pos[0].x;
     sphere[0].y = sphere_prev_pos[0].y;
@@ -89,26 +81,26 @@ bool BattleScreen::update(float dt, bool screen_resized) {
     sphere[1].y = sphere_prev_pos[1].y;
     sphere[1].z = sphere_prev_pos[1].z;
 
-    // Reflection of velocity over normal.
+    // Get projection onto normal.
 
-    float dot_zero = SC_SACD_Dot_Product(normal, sphere_vel[0]);
-    float dot_one = SC_SACD_Dot_Product(normal, sphere_vel[1]);
+    float temp = SC_SACD_Dot_Product(normal, normal);
 
-    SC_SACD_Vec3 par_zero = normal;
-    par_zero.x *= dot_zero * 2.0F;
-    par_zero.y *= dot_zero * 2.0F;
-    par_zero.z *= dot_zero * 2.0F;
-    SC_SACD_Vec3 par_one = normal;
-    par_one.x *= dot_one * 2.0F;
-    par_one.y *= dot_one * 2.0F;
-    par_one.z *= dot_one * 2.0F;
+    float dot_product[2] = {SC_SACD_Dot_Product(normal, sphere_vel[0]) / temp,
+                            SC_SACD_Dot_Product(normal, sphere_vel[1]) / temp};
+    SC_SACD_Vec3 proj[2] = {
+        SC_SACD_Vec3{dot_product[0] * normal.x, dot_product[0] * normal.y,
+                     dot_product[0] * normal.z},
+        SC_SACD_Vec3{dot_product[1] * normal.x, dot_product[1] * normal.y,
+                     dot_product[1] * normal.z}};
 
-    sphere_vel[0].x = par_zero.x - sphere_vel[0].x;
-    sphere_vel[0].y = par_zero.y - sphere_vel[0].y;
-    sphere_vel[0].z = par_zero.z - sphere_vel[0].z;
-    sphere_vel[1].x = par_one.x - sphere_vel[1].x;
-    sphere_vel[1].y = par_one.y - sphere_vel[1].y;
-    sphere_vel[1].z = par_one.z - sphere_vel[1].z;
+    // Get reflection over normal, and negate it to get desired result.
+
+    sphere_vel[0].x = -(proj[0].x * 2.0F - sphere_vel[0].x);
+    sphere_vel[0].y = -(proj[0].y * 2.0F - sphere_vel[0].y);
+    sphere_vel[0].z = -(proj[0].z * 2.0F - sphere_vel[0].z);
+    sphere_vel[1].x = -(proj[1].x * 2.0F - sphere_vel[1].x);
+    sphere_vel[1].y = -(proj[1].y * 2.0F - sphere_vel[1].y);
+    sphere_vel[1].z = -(proj[1].z * 2.0F - sphere_vel[1].z);
 
     sphere_collided = true;
   }
@@ -151,9 +143,11 @@ bool BattleScreen::draw(RenderTexture *render_texture) {
   DrawPlane(Vector3{0.0F, -0.01F, 0.0F},
             Vector2{SPACE_WIDTH * 2.0F, SPACE_DEPTH * 2.0F}, RAYWHITE);
   DrawGrid(20, 0.2F);
+  DrawSphere(Vector3{sphere[0].x, sphere[0].y, sphere[0].z}, sphere[0].radius,
+             GREEN);
+  DrawSphere(Vector3{sphere[1].x, sphere[1].y, sphere[1].z}, sphere[1].radius,
+             RED);
   for (unsigned int idx = 0; idx < 2; ++idx) {
-    DrawSphere(Vector3{sphere[idx].x, sphere[idx].y, sphere[idx].z},
-               sphere[idx].radius, GREEN);
     DrawSphere(Vector3{sphere_touch_point[idx].x, sphere_touch_point[idx].y,
                        sphere_touch_point[idx].z},
                0.02F, RED);

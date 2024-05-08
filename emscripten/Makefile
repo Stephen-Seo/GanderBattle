@@ -8,10 +8,12 @@ SOURCES = \
 		../src/ems.cc \
 		../src/main.cc \
 		../src/screen.cc \
+		../src/shared_data.cc \
 		../src/screen_debug.cc
 
 HEADERS = \
 		../src/screen.h \
+		../src/shared_data.h \
 		../src/screen_debug.h
 
 OBJDIR = objdir

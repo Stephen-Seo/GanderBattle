@@ -7,6 +7,9 @@
 #include <variant>
 #include <vector>
 
+// Local includes.
+#include "shared_data.h"
+
 // Forward declarations.
 class ScreenStack;
 struct RenderTexture;
@@ -101,6 +104,9 @@ class ScreenStack {
 
   void reset_render_texture();
 
+  SharedData& get_shared_data();
+  const SharedData& get_shared_data() const;
+
  private:
   ScreenStack();
 
@@ -110,6 +116,7 @@ class ScreenStack {
   Weak self_weak;
   std::vector<Screen::Ptr> stack;
   std::deque<PendingAction> actions;
+  SharedData shared_data;
 };
 
 template <typename SubScreen>

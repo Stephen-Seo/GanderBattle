@@ -105,6 +105,10 @@ void ScreenStack::reset_render_texture() {
   *render_texture = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 }
 
+SharedData &ScreenStack::get_shared_data() { return shared_data; }
+
+const SharedData &ScreenStack::get_shared_data() const { return shared_data; }
+
 ScreenStack::ScreenStack()
     : render_texture(new RenderTexture), self_weak(), stack(), actions() {
   *render_texture = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());

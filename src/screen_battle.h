@@ -19,9 +19,12 @@ constexpr float SPACE_DEPTH = 2.5F;
 
 constexpr float FLOOR_TIME_MAX = 1.0F;
 
+constexpr float SHADER_GROUND_SCALE = 0.1F;
+
 class BattleScreen : public Screen {
  public:
   BattleScreen(std::weak_ptr<ScreenStack> stack);
+  virtual ~BattleScreen();
 
   virtual bool update(float dt, bool screen_resized);
 
@@ -37,6 +40,12 @@ class BattleScreen : public Screen {
   SC_SACD_Vec3 sphere_touch_point[2];
   SC_SACD_Vec3 sphere_prev_pos[2];
   SC_SACD_AABB_Box floor_box;
+  Model ground_model;
+  Shader ground_shader;
+  int ground_shader_scale_idx;
+  int ground_shader_pos_idx;
+  float ground_scale;
+  float ground_pos[2];
   bool sphere_collided;
 };
 

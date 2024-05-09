@@ -1,7 +1,5 @@
 #include "screen_battle.h"
 
-#include "sc_sacd.h"
-
 // Standard library includes.
 #include <cmath>
 #include <numbers>
@@ -10,15 +8,74 @@
 #include <iostream>
 #endif
 
+static const char *BATTLE_SCREEN_GROUND_SHADER_VS =
+    // Default vertex shader from Raylib.
+    "#version 100                       \n"
+    "precision mediump float;           \n"  // Precision required for OpenGL
+                                             // ES2 (WebGL) (on some browsers)
+    "attribute vec3 vertexPosition;     \n"
+    "attribute vec2 vertexTexCoord;     \n"
+    "attribute vec4 vertexColor;        \n"
+    "varying vec2 fragTexCoord;         \n"
+    "varying vec4 fragColor;            \n"
+    "uniform mat4 mvp;                  \n"
+    "void main()                        \n"
+    "{                                  \n"
+    "    fragTexCoord = vertexTexCoord; \n"
+    "    fragColor = vertexColor;       \n"
+    "    gl_Position = mvp*vec4(vertexPosition, 1.0); \n"
+    "}                                  \n";
+;
+static const char *BATTLE_SCREEN_GROUND_SHADER_FS =
+    "#version 100\n"
+    "precision mediump float;\n"
+    "// Input vertex attributes (from vertex shader)\n"
+    "varying vec2 fragTexCoord;\n"
+    "varying vec4 fragColor;\n"
+    "// Input uniform values\n"
+    "uniform sampler2D texture0;\n"
+    "uniform vec4 colDiffuse;\n"
+    "uniform float ground_scale;\n"
+    "uniform vec2 pos;\n"
+    "void main() {\n"
+    // Scale by ground_scale. Smaller the scale, the larger the texture.
+    "vec2 offset = (fragTexCoord + pos) * ground_scale;\n"
+    // Ensure texture wraps-around.
+    "if (offset.x < 0.0) {\n"
+    "  offset.x = offset.x + floor(abs(offset.x) + 1.0);\n"
+    "} else if (offset.x > 1.0) {\n"
+    "  offset.x = offset.x - floor(offset.x);\n"
+    "}\n"
+    "if (offset.y < 0.0) {\n"
+    "  offset.y = offset.y + floor(abs(offset.y) + 1.0);\n"
+    "} else if (offset.y > 1.0) {\n"
+    "  offset.y = offset.y - floor(offset.y);\n"
+    "}\n"
+    "vec4 texelColor = texture2D(texture0, offset)*colDiffuse*fragColor;\n"
+    // Ensure no color values below 0.3 .
+    "texelColor *= 0.7;\n"
+    "texelColor += vec4(0.3, 0.3, 0.3, 0.3);\n"
+    // Ensure a "circle" of the ground is visible.
+    "vec2 diff = fragTexCoord - vec2(0.5, 0.5);\n"
+    "float length = sqrt(diff.x * diff.x + diff.y * diff.y);\n"
+    "if (length > 0.3) {\n"
+    "  texelColor.a = 0.0;\n"
+    "} else if (length > 0.2) {\n"
+    "  texelColor.a = 1.0 - (length - 0.2) * 10.0;\n"
+    "}\n"
+    "gl_FragColor = texelColor;\n"
+    "}\n";
+
 BattleScreen::BattleScreen(std::weak_ptr<ScreenStack> stack)
     : Screen(stack),
       camera_orbit_timer(0.0F),
       sphere{{0.0F, 1.0F, 0.0F, 0.2F}, {1.0F, 1.0F, 1.0F, 0.2F}},
-      sphere_vel{{1.105F, 1.0F, 3.3F}, {2.105F, 1.0F, 2.3F}},
+      sphere_vel{{-1.105F, 1.0F, -3.3F}, {2.105F, 1.0F, 2.3F}},
       sphere_acc{{0.0F, -SPHERE_DROP_ACC, 0.0F},
                  {0.0F, -SPHERE_DROP_ACC, 0.0F}},
       sphere_touch_point{{0.0F, 0.0F, 0.0F}, {0.0F, 0.0F, 0.0F}},
-      floor_box{0.0F, -1.0F, 0.0F, 10.0F, 2.0F, 10.0F} {
+      floor_box{0.0F, -1.0F, 0.0F, 10.0F, 2.0F, 10.0F},
+      ground_pos{0.0F, 0.0F} {
   camera.up.x = 0.0F;
   camera.up.y = 1.0F;
   camera.up.z = 0.0F;
@@ -29,30 +86,56 @@ BattleScreen::BattleScreen(std::weak_ptr<ScreenStack> stack)
   camera.target.y = 0.0F;
   camera.target.z = 0.0F;
 
-  camera.position.x = 0.0F;
+  camera.position.x = CAMERA_ORBIT_XZ;
   camera.position.y = CAMERA_HEIGHT;
   camera.position.z = CAMERA_ORBIT_XZ;
 
   camera.projection = CAMERA_PERSPECTIVE;
+
+  ground_model = LoadModelFromMesh(GenMeshPlane(8, 8, 1, 1));
+
+  ground_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture =
+      LoadTexture("res/blue_noise_256x256.png");
+
+  ground_shader = LoadShaderFromMemory(BATTLE_SCREEN_GROUND_SHADER_VS,
+                                       BATTLE_SCREEN_GROUND_SHADER_FS);
+  ground_shader_scale_idx = GetShaderLocation(ground_shader, "ground_scale");
+  ground_scale = SHADER_GROUND_SCALE;
+  SetShaderValue(ground_shader, ground_shader_scale_idx, &ground_scale,
+                 SHADER_UNIFORM_FLOAT);
+
+  ground_shader_pos_idx = GetShaderLocation(ground_shader, "pos");
+  SetShaderValue(ground_shader, ground_shader_pos_idx, ground_pos,
+                 SHADER_UNIFORM_VEC2);
+
+  ground_model.materials[0].shader = ground_shader;
+
 #ifndef NDEBUG
-  std::clog << "Initialized BattleScreen.\n";
+  TraceLog(LOG_INFO, "Shader is ready: %s",
+           (IsShaderReady(ground_shader) ? "yes" : "no"));
+  TraceLog(LOG_INFO, "Initialized BattleScreen.");
 #endif
 }
 
+BattleScreen::~BattleScreen() {
+  UnloadModel(ground_model);
+  UnloadShader(ground_shader);
+}
+
 bool BattleScreen::update(float dt, bool screen_resized) {
-  camera_orbit_timer += dt;
-  if (camera_orbit_timer > CAMERA_ORBIT_TIME) {
-    camera_orbit_timer -= CAMERA_ORBIT_TIME;
-  }
+  // camera_orbit_timer += dt;
+  // if (camera_orbit_timer > CAMERA_ORBIT_TIME) {
+  //   camera_orbit_timer -= CAMERA_ORBIT_TIME;
+  // }
 
   floor_timer += dt;
 
-  camera.position.z = std::cos(camera_orbit_timer / CAMERA_ORBIT_TIME *
-                               std::numbers::pi_v<float> * 2.0F) *
-                      CAMERA_ORBIT_XZ;
-  camera.position.x = std::sin(camera_orbit_timer / CAMERA_ORBIT_TIME *
-                               std::numbers::pi_v<float> * 2.0F) *
-                      CAMERA_ORBIT_XZ;
+  /*  camera.position.z = std::cos(camera_orbit_timer / CAMERA_ORBIT_TIME **/
+  /*                               std::numbers::pi_v<float> * 2.0F) **/
+  /*                      CAMERA_ORBIT_XZ;*/
+  /*  camera.position.x = std::sin(camera_orbit_timer / CAMERA_ORBIT_TIME **/
+  /*                               std::numbers::pi_v<float> * 2.0F) **/
+  /*                      CAMERA_ORBIT_XZ;*/
 
   for (unsigned int idx = 0; idx < 2; ++idx) {
     sphere_vel[idx].x += sphere_acc[idx].x * dt;
@@ -118,6 +201,16 @@ bool BattleScreen::update(float dt, bool screen_resized) {
       sphere_vel[idx].x = -std::abs(sphere_vel[idx].x);
     }
 
+    if (sphere[idx].z - sphere[idx].radius < -SPACE_DEPTH) {
+      sphere[idx].z = sphere_prev_pos[idx].z;
+      sphere_vel[idx].z = std::abs(sphere_vel[idx].z);
+    } else if (sphere[idx].z + sphere[idx].radius > SPACE_DEPTH) {
+      sphere[idx].z = sphere_prev_pos[idx].z;
+      sphere_vel[idx].z = -std::abs(sphere_vel[idx].z);
+    }
+
+    // Check collision with ground.
+    /*    if (sphere[idx].y - sphere[idx].radius < 0.0F) {*/
     if (SC_SACD_Sphere_AABB_Box_Collision(sphere[idx], floor_box)) {
       sphere_touch_point[idx].x = sphere[idx].x;
       sphere_touch_point[idx].y = sphere_prev_pos[idx].y - sphere[idx].radius;
@@ -126,15 +219,19 @@ bool BattleScreen::update(float dt, bool screen_resized) {
       sphere_vel[idx].y = std::abs(sphere_vel[idx].y);
       floor_timer = 0.0F;
     }
-
-    if (sphere[idx].z - sphere[idx].radius < -SPACE_DEPTH) {
-      sphere[idx].z = sphere_prev_pos[idx].z;
-      sphere_vel[idx].z = std::abs(sphere_vel[idx].z);
-    } else if (sphere[idx].z + sphere[idx].radius > SPACE_DEPTH) {
-      sphere[idx].z = sphere_prev_pos[idx].z;
-      sphere_vel[idx].z = -std::abs(sphere_vel[idx].z);
-    }
   }
+
+  // TODO why 8? Maybe because texture is 256x256?
+  ground_pos[0] = sphere[0].x / 8.0F;
+  ground_pos[1] = sphere[0].z / 8.0F;
+  SetShaderValue(ground_shader, ground_shader_pos_idx, ground_pos,
+                 SHADER_UNIFORM_VEC2);
+
+  // TODO DEBUG
+  camera.target.x = sphere[0].x;
+  camera.position.x = sphere[0].x;
+  camera.target.z = sphere[0].z;
+  camera.position.z = sphere[0].z + CAMERA_ORBIT_XZ;
 
   return false;
 }
@@ -144,15 +241,6 @@ bool BattleScreen::draw(RenderTexture *render_texture) {
   ClearBackground(BLUE);
   BeginMode3D(camera);
 
-  unsigned char floor_red;
-  if (floor_timer >= 0 && floor_timer < FLOOR_TIME_MAX) {
-    floor_red = (unsigned char)(floor_timer / FLOOR_TIME_MAX * 255.0F);
-  } else {
-    floor_red = 255;
-  }
-  DrawPlane(Vector3{0.0F, -0.01F, 0.0F},
-            Vector2{SPACE_WIDTH * 2.0F, SPACE_DEPTH * 2.0F},
-            Color{floor_red, 255, 255, 255});
   DrawGrid(20, 0.2F);
   DrawSphere(Vector3{sphere[0].x, sphere[0].y, sphere[0].z}, sphere[0].radius,
              GREEN);
@@ -163,6 +251,9 @@ bool BattleScreen::draw(RenderTexture *render_texture) {
                        sphere_touch_point[idx].z},
                0.02F, RED);
   }
+
+  DrawModel(ground_model, Vector3{sphere[0].x, -0.01F, sphere[0].z}, 1.0F,
+            GREEN);
 
   EndMode3D();
   EndTextureMode();

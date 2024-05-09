@@ -37,6 +37,7 @@ ${OUTDIR}/GanderBattle.html: ./raylib/libraylib.a ./raylib/raylib.h ./raylib/ray
 		-s USE_GLFW=3 -Iraylib -Lraylib -lraylib \
 		-sEXPORTED_FUNCTIONS=_main \
 		-sEXPORTED_RUNTIME_METHODS=ccall \
+		--preload-file ../res \
 		${OTHER_FLAGS} \
 		${OBJECTS}
 	cd ${OUTDIR} && ln -sf GanderBattle.html index.html

@@ -20,6 +20,8 @@ constexpr float SPACE_DEPTH = 2.5F;
 constexpr float FLOOR_TIME_MAX = 1.0F;
 
 constexpr float SHADER_GROUND_SCALE = 0.1F;
+constexpr int GROUND_PLANE_SIZE = 8;
+constexpr float GROUND_PLANE_SIZE_F = (float)GROUND_PLANE_SIZE;
 
 class BattleScreen : public Screen {
  public:

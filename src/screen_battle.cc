@@ -58,10 +58,10 @@ static const char *BATTLE_SCREEN_GROUND_SHADER_FS =
     // Ensure a "circle" of the ground is visible.
     "vec2 diff = fragTexCoord - vec2(0.5, 0.5);\n"
     "float length = sqrt(diff.x * diff.x + diff.y * diff.y);\n"
-    "if (length > 0.3) {\n"
+    "if (length > 0.45) {\n"
     "  texelColor.a = 0.0;\n"
-    "} else if (length > 0.2) {\n"
-    "  texelColor.a = 1.0 - (length - 0.2) * 10.0;\n"
+    "} else if (length > 0.35) {\n"
+    "  texelColor.a = 1.0 - (length - 0.35) * 10.0;\n"
     "}\n"
     "gl_FragColor = texelColor;\n"
     "}\n";
@@ -92,7 +92,8 @@ BattleScreen::BattleScreen(std::weak_ptr<ScreenStack> stack)
 
   camera.projection = CAMERA_PERSPECTIVE;
 
-  ground_model = LoadModelFromMesh(GenMeshPlane(8, 8, 1, 1));
+  ground_model = LoadModelFromMesh(
+      GenMeshPlane(GROUND_PLANE_SIZE, GROUND_PLANE_SIZE, 1, 1));
 
   ground_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture =
       LoadTexture("res/blue_noise_256x256.png");
@@ -221,9 +222,8 @@ bool BattleScreen::update(float dt, bool screen_resized) {
     }
   }
 
-  // TODO why 8? Maybe because texture is 256x256?
-  ground_pos[0] = sphere[0].x / 8.0F;
-  ground_pos[1] = sphere[0].z / 8.0F;
+  ground_pos[0] = sphere[0].x / GROUND_PLANE_SIZE_F;
+  ground_pos[1] = sphere[0].z / GROUND_PLANE_SIZE_F;
   SetShaderValue(ground_shader, ground_shader_pos_idx, ground_pos,
                  SHADER_UNIFORM_VEC2);
 
@@ -253,7 +253,7 @@ bool BattleScreen::draw(RenderTexture *render_texture) {
   }
 
   DrawModel(ground_model, Vector3{sphere[0].x, -0.01F, sphere[0].z}, 1.0F,
-            GREEN);
+            Color{0, 128, 0, 255});
 
   EndMode3D();
   EndTextureMode();

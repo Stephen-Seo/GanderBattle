@@ -1,5 +1,7 @@
 #include "screen_battle.h"
 
+#include "sc_sacd.h"
+
 // Standard library includes.
 #include <cmath>
 #include <numbers>
@@ -7,6 +9,9 @@
 #ifndef NDEBUG
 #include <iostream>
 #endif
+
+// Local includes.
+#include "ems.h"
 
 static const char *BATTLE_SCREEN_GROUND_SHADER_VS =
     // Default vertex shader from Raylib.
@@ -80,14 +85,12 @@ BattleScreen::BattleScreen(std::weak_ptr<ScreenStack> stack)
     : Screen(stack),
       camera_orbit_timer(0.0F),
       sphere{{-1.0F, 0.21F, 0.0F, 0.2F}, {0.0F, 0.21F, 0.0F, 0.2F}},
-      /*      sphere_vel{{-1.105F, 1.0F, -3.3F}, {2.105F, 1.0F, 2.3F}},*/
       sphere_vel{{0.0F, 0.0F, 0.0F}, {0.0F, 0.0F, 0.0F}},
-      /*      sphere_acc{{0.0F, -SPHERE_DROP_ACC, 0.0F},*/
-      /*                 {0.0F, -SPHERE_DROP_ACC, 0.0F}},*/
       sphere_acc{{0.0F, 0.0F, 0.0F}, {0.0F, 0.0F, 0.0F}},
       sphere_touch_point{{0.0F, 0.0F, 0.0F}, {0.0F, 0.0F, 0.0F}},
       floor_box{0.0F, -1.0F, 0.0F, 10.0F, 2.0F, 10.0F},
-      ground_pos{0.0F, 0.0F, 0.0F, 0.0F} {
+      ground_pos{0.0F, 0.0F, 0.0F, 0.0F},
+      enable_auto_movement(false) {
   camera.up.x = 0.0F;
   camera.up.y = 1.0F;
   camera.up.z = 0.0F;
@@ -151,36 +154,86 @@ BattleScreen::~BattleScreen() {
 }
 
 bool BattleScreen::update(float dt, bool screen_resized) {
-  if (IsKeyDown(KEY_D)) {
-    sphere_vel[0].x = MOVEMENT_SPEED;
-  } else if (IsKeyDown(KEY_A)) {
-    sphere_vel[0].x = -MOVEMENT_SPEED;
-  } else {
-    sphere_vel[0].x = 0.0F;
+  if (IsKeyPressed(KEY_SPACE)) {
+    enable_auto_movement = !enable_auto_movement;
+    stack.lock()->get_shared_data().enable_auto_movement = enable_auto_movement;
+    if (enable_auto_movement) {
+      sphere_vel[0].x =
+          (call_js_get_random() - 0.5F) * 2.0F * AUTOMOVE_DIR_VAR_MAX;
+      sphere_vel[0].y =
+          (call_js_get_random() - 0.5F) * 2.0F * AUTOMOVE_DIR_VAR_MAX;
+      sphere_vel[0].z =
+          (call_js_get_random() - 0.5F) * 2.0F * AUTOMOVE_DIR_VAR_MAX;
+
+      sphere_vel[0] = SC_SACD_Vec3_Mult(SC_SACD_Vec3_Normalize(sphere_vel[0]),
+                                        AUTOMOVE_SPEED);
+
+      sphere_vel[1].x =
+          (call_js_get_random() - 0.5F) * 2.0F * AUTOMOVE_DIR_VAR_MAX;
+      sphere_vel[1].y =
+          (call_js_get_random() - 0.5F) * 2.0F * AUTOMOVE_DIR_VAR_MAX;
+      sphere_vel[1].z =
+          (call_js_get_random() - 0.5F) * 2.0F * AUTOMOVE_DIR_VAR_MAX;
+
+      sphere_vel[1] = SC_SACD_Vec3_Mult(SC_SACD_Vec3_Normalize(sphere_vel[1]),
+                                        AUTOMOVE_SPEED);
+
+      sphere_acc[0].y = -SPHERE_DROP_ACC;
+      sphere_acc[1].y = -SPHERE_DROP_ACC;
+      sphere[0].y = 1.0F;
+      sphere[1].y = 1.0F;
+    } else {
+      sphere_acc[0].x = 0.0F;
+      sphere_acc[0].y = 0.0F;
+      sphere_acc[0].z = 0.0F;
+      sphere_acc[1].x = 0.0F;
+      sphere_acc[1].y = 0.0F;
+      sphere_acc[1].z = 0.0F;
+
+      sphere_vel[0].x = 0.0F;
+      sphere_vel[0].y = 0.0F;
+      sphere_vel[0].z = 0.0F;
+      sphere_vel[1].x = 0.0F;
+      sphere_vel[1].y = 0.0F;
+      sphere_vel[1].z = 0.0F;
+
+      sphere[0].y = 0.21F;
+      sphere[1].y = 0.21F;
+    }
   }
 
-  if (IsKeyDown(KEY_W)) {
-    sphere_vel[0].z = -MOVEMENT_SPEED;
-  } else if (IsKeyDown(KEY_S)) {
-    sphere_vel[0].z = MOVEMENT_SPEED;
-  } else {
-    sphere_vel[0].z = 0.0F;
-  }
+  if (!enable_auto_movement) {
+    if (IsKeyDown(KEY_D)) {
+      sphere_vel[0].x = MOVEMENT_SPEED;
+    } else if (IsKeyDown(KEY_A)) {
+      sphere_vel[0].x = -MOVEMENT_SPEED;
+    } else {
+      sphere_vel[0].x = 0.0F;
+    }
 
-  if (IsKeyDown(KEY_RIGHT)) {
-    sphere_vel[1].x = MOVEMENT_SPEED;
-  } else if (IsKeyDown(KEY_LEFT)) {
-    sphere_vel[1].x = -MOVEMENT_SPEED;
-  } else {
-    sphere_vel[1].x = 0.0F;
-  }
+    if (IsKeyDown(KEY_W)) {
+      sphere_vel[0].z = -MOVEMENT_SPEED;
+    } else if (IsKeyDown(KEY_S)) {
+      sphere_vel[0].z = MOVEMENT_SPEED;
+    } else {
+      sphere_vel[0].z = 0.0F;
+    }
 
-  if (IsKeyDown(KEY_UP)) {
-    sphere_vel[1].z = -MOVEMENT_SPEED;
-  } else if (IsKeyDown(KEY_DOWN)) {
-    sphere_vel[1].z = MOVEMENT_SPEED;
-  } else {
-    sphere_vel[1].z = 0.0F;
+    if (IsKeyDown(KEY_RIGHT)) {
+      sphere_vel[1].x = MOVEMENT_SPEED;
+    } else if (IsKeyDown(KEY_LEFT)) {
+      sphere_vel[1].x = -MOVEMENT_SPEED;
+    } else {
+      sphere_vel[1].x = 0.0F;
+    }
+
+    if (IsKeyDown(KEY_UP)) {
+      sphere_vel[1].z = -MOVEMENT_SPEED;
+    } else if (IsKeyDown(KEY_DOWN)) {
+      sphere_vel[1].z = MOVEMENT_SPEED;
+    } else {
+      sphere_vel[1].z = 0.0F;
+    }
   }
   // camera_orbit_timer += dt;
   // if (camera_orbit_timer > CAMERA_ORBIT_TIME) {
@@ -314,7 +367,7 @@ bool BattleScreen::draw(RenderTexture *render_texture) {
                  SHADER_UNIFORM_VEC2);
   SetShaderValue(ground_shader, ground_shader_other_pos_idx, ground_pos + 2,
                  SHADER_UNIFORM_VEC2);
-  DrawModel(ground_model, Vector3{sphere[0].x, -0.01F, sphere[0].z}, 1.0F,
+  DrawModel(ground_model, Vector3{sphere[0].x, -0.0101F, sphere[0].z}, 1.0F,
             Color{0, 128, 0, 255});
 
   SetShaderValue(ground_shader, ground_shader_pos_idx, ground_pos + 2,
@@ -326,5 +379,5 @@ bool BattleScreen::draw(RenderTexture *render_texture) {
 
   EndMode3D();
   EndTextureMode();
-  return false;
+  return true;
 }

@@ -24,6 +24,8 @@ constexpr int GROUND_PLANE_SIZE = 5;
 constexpr float GROUND_PLANE_SIZE_F = (float)GROUND_PLANE_SIZE;
 
 constexpr float MOVEMENT_SPEED = 1.0F;
+constexpr float AUTOMOVE_DIR_VAR_MAX = 2.0F;
+constexpr float AUTOMOVE_SPEED = 3.0F;
 
 class BattleScreen : public Screen {
  public:
@@ -54,6 +56,7 @@ class BattleScreen : public Screen {
   float ground_scale;
   float ground_pos[4];
   bool sphere_collided;
+  bool enable_auto_movement;
 };
 
 #endif

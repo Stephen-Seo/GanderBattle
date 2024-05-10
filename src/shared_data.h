@@ -4,6 +4,8 @@
 class SharedData {
  public:
   SharedData();
+
+  bool enable_auto_movement;
 };
 
 #endif

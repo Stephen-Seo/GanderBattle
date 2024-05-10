@@ -1,3 +1,3 @@
 #include "shared_data.h"
 
-SharedData::SharedData() {}
+SharedData::SharedData() : enable_auto_movement(false) {}

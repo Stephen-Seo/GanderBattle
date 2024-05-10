@@ -62,7 +62,7 @@ endif()
 
 if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ResourcePacker/src/CMakeLists.txt")
   message(WARNING "ResourcePacker not found, skipping... (ran \"git submodule update --init\"?)")
-else()
+elseif(NOT DEFINED DO_NOT_USE_RESOURCE_PACKER)
   add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ResourcePacker/src" "${CMAKE_CURRENT_BINARY_DIR}/rp")
   target_compile_definitions(ResourcePacker-s PRIVATE NDEBUG)
   add_executable(ResourcePack "${CMAKE_CURRENT_SOURCE_DIR}/../src_build/rp_main.cpp")

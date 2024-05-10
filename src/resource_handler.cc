@@ -7,7 +7,9 @@
 
 // Third-party includes.
 #ifndef __EMSCRIPTEN__
+#ifdef SEODISPARATE_RESOURCE_PACKER_AVAILABLE
 # include <ResourcePacker.hpp>
+#endif
 #endif
 #include <raylib.h>
 
@@ -37,6 +39,7 @@ std::vector<char> ResourceHandler::load(const char *filename) {
   } while(false);
 
 #ifndef __EMSCRIPTEN__
+#ifdef SEODISPARATE_RESOURCE_PACKER_AVAILABLE
 #ifndef NDEBUG
     TraceLog(LOG_INFO, "Attempting to load \"%s\" from packfile...", filename);
 #endif
@@ -52,7 +55,8 @@ std::vector<char> ResourceHandler::load(const char *filename) {
       return data;
     }
   }
-#endif
+#endif // RESOURCE_PACKER_AVAILABLE
+#endif // Not __EMSCRIPTEN__
 
   TraceLog(LOG_WARNING, "Failed to load resource: %s", filename);
 

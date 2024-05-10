@@ -10,6 +10,7 @@
 #include <raylib.h>
 
 // Local includes.
+#include "constants.h"
 #include "screen.h"
 #include "screen_battle.h"
 #include "screen_debug.h"
@@ -34,7 +35,7 @@ void main_loop_update(void *ud) {
 #endif
 
 int main(int argc, char **argv) {
-  InitWindow(800, 600, "Gander Battle");
+  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Gander Battle");
 
 #ifdef NDEBUG
   SetTraceLogLevel(LOG_WARNING);

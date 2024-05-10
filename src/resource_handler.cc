@@ -2,13 +2,13 @@
 
 // Standard library includes.
 #include <cstring>
-#include <fstream>
 #include <filesystem>
+#include <fstream>
 
 // Third-party includes.
 #ifndef __EMSCRIPTEN__
 #ifdef SEODISPARATE_RESOURCE_PACKER_AVAILABLE
-# include <ResourcePacker.hpp>
+#include <ResourcePacker.hpp>
 #endif
 #endif
 #include <raylib.h>
@@ -32,21 +32,22 @@ std::vector<char> ResourceHandler::load(const char *filename) {
     ifs.read(data.data(), size);
     if (!ifs.fail()) {
 #ifndef NDEBUG
-    TraceLog(LOG_INFO, "Loaded \"%s\".", filename);
+      TraceLog(LOG_INFO, "Loaded \"%s\".", filename);
 #endif
       return data;
     }
-  } while(false);
+  } while (false);
 
 #ifndef __EMSCRIPTEN__
 #ifdef SEODISPARATE_RESOURCE_PACKER_AVAILABLE
 #ifndef NDEBUG
-    TraceLog(LOG_INFO, "Attempting to load \"%s\" from packfile...", filename);
+  TraceLog(LOG_INFO, "Attempting to load \"%s\" from packfile...", filename);
 #endif
-  if(RP::checkIfPackfile("data")) {
+  if (RP::checkIfPackfile("data")) {
     std::unique_ptr<char[]> data_ptr{};
     std::uint64_t size;
-    if(RP::getFileData(data_ptr, size, std::string("data"), std::filesystem::path(filename).filename().string())) {
+    if (RP::getFileData(data_ptr, size, std::string("data"),
+                        std::filesystem::path(filename).filename().string())) {
       data.resize(size);
       std::memcpy(data.data(), data_ptr.get(), size);
 #ifndef NDEBUG
@@ -55,8 +56,8 @@ std::vector<char> ResourceHandler::load(const char *filename) {
       return data;
     }
   }
-#endif // RESOURCE_PACKER_AVAILABLE
-#endif // Not __EMSCRIPTEN__
+#endif  // RESOURCE_PACKER_AVAILABLE
+#endif  // Not __EMSCRIPTEN__
 
   TraceLog(LOG_WARNING, "Failed to load resource: %s", filename);
 

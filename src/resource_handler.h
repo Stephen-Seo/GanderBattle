@@ -4,7 +4,7 @@
 #include <vector>
 
 namespace ResourceHandler {
-  std::vector<char> load(const char *filename);
+std::vector<char> load(const char *filename);
 }
 
 #endif

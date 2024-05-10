@@ -5,7 +5,6 @@
 // Standard library includes.
 #include <cmath>
 #include <numbers>
-#include <raylib.h>
 
 #ifndef NDEBUG
 #include <iostream>
@@ -116,8 +115,11 @@ BattleScreen::BattleScreen(std::weak_ptr<ScreenStack> stack)
     auto blue_noise_data = ResourceHandler::load("res/blue_noise_256x256.png");
 
     if (blue_noise_data.size() != 0) {
-      auto image = LoadImageFromMemory(".png", (const unsigned char*)blue_noise_data.data(), (int)blue_noise_data.size());
-      ground_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(image);
+      auto image = LoadImageFromMemory(
+          ".png", (const unsigned char *)blue_noise_data.data(),
+          (int)blue_noise_data.size());
+      ground_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture =
+          LoadTextureFromImage(image);
       UnloadImage(image);
     }
   }

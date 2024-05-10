@@ -1,7 +1,8 @@
+COMMON_FLAGS = -I../third_party/3d_collision_helpers/src -I../third_party/lua
 ifdef RELEASE
-	OTHER_FLAGS = -DNDEBUG -O3 -I../third_party/3d_collision_helpers/src
+	OTHER_FLAGS = -DNDEBUG -O3 ${COMMON_FLAGS}
 else
-	OTHER_FLAGS = -Og -I../third_party/3d_collision_helpers/src
+	OTHER_FLAGS = -Og ${COMMON_FLAGS}
 endif
 
 SOURCES = \
@@ -37,6 +38,7 @@ ${OUTDIR}/GanderBattle.html: ./raylib/libraylib.a ./raylib/raylib.h ./raylib/ray
 	@mkdir -p ${OUTDIR}
 	${CXX} -std=c++20 -o ${OUTDIR}/GanderBattle.html \
 		-s USE_GLFW=3 -Iraylib -Lraylib -lraylib \
+		-Llua -llua \
 		-sEXPORTED_FUNCTIONS=_main \
 		-sEXPORTED_RUNTIME_METHODS=ccall \
 		--preload-file ../res \

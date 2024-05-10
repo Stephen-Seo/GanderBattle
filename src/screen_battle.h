@@ -20,8 +20,10 @@ constexpr float SPACE_DEPTH = 2.5F;
 constexpr float FLOOR_TIME_MAX = 1.0F;
 
 constexpr float SHADER_GROUND_SCALE = 0.1F;
-constexpr int GROUND_PLANE_SIZE = 8;
+constexpr int GROUND_PLANE_SIZE = 5;
 constexpr float GROUND_PLANE_SIZE_F = (float)GROUND_PLANE_SIZE;
+
+constexpr float MOVEMENT_SPEED = 1.0F;
 
 class BattleScreen : public Screen {
  public:
@@ -46,8 +48,11 @@ class BattleScreen : public Screen {
   Shader ground_shader;
   int ground_shader_scale_idx;
   int ground_shader_pos_idx;
+  int ground_shader_other_pos_idx;
+  int ground_shader_radius_idx;
+  int ground_shader_ground_size_idx;
   float ground_scale;
-  float ground_pos[2];
+  float ground_pos[4];
   bool sphere_collided;
 };
 

@@ -37,9 +37,12 @@ static const char *BATTLE_SCREEN_GROUND_SHADER_FS =
     "uniform vec4 colDiffuse;\n"
     "uniform float ground_scale;\n"
     "uniform vec2 pos;\n"
+    "uniform vec2 other_pos;\n"
+    "uniform float radius;\n"
+    "uniform float ground_size;\n"
     "void main() {\n"
     // Scale by ground_scale. Smaller the scale, the larger the texture.
-    "vec2 offset = (fragTexCoord + pos) * ground_scale;\n"
+    "vec2 offset = (fragTexCoord + pos / ground_size) * ground_scale;\n"
     // Ensure texture wraps-around.
     "if (offset.x < 0.0) {\n"
     "  offset.x = offset.x + floor(abs(offset.x) + 1.0);\n"
@@ -57,11 +60,18 @@ static const char *BATTLE_SCREEN_GROUND_SHADER_FS =
     "texelColor += vec4(0.3, 0.3, 0.3, 0.3);\n"
     // Ensure a "circle" of the ground is visible.
     "vec2 diff = fragTexCoord - vec2(0.5, 0.5);\n"
-    "float length = sqrt(diff.x * diff.x + diff.y * diff.y);\n"
-    "if (length > 0.45) {\n"
+    "float diff_length = length(diff);\n"
+    "vec2 pos_diff = (other_pos - pos) / ground_size;\n"
+    "if (diff_length > 0.45) {\n"
     "  texelColor.a = 0.0;\n"
-    "} else if (length > 0.35) {\n"
-    "  texelColor.a = 1.0 - (length - 0.35) * 10.0;\n"
+    "} else if (diff_length > 0.35) {\n"
+    "  if (distance(diff, pos_diff) > 0.35) {\n"
+    "    float value = 1.0 - (diff_length - 0.35) * 10.0;\n"
+    "    texelColor.r = texelColor.r * value;\n"
+    "    texelColor.g = texelColor.g * value;\n"
+    "    texelColor.b = texelColor.b * value;\n"
+    "    texelColor.a = texelColor.a * value;\n"
+    "  }\n"
     "}\n"
     "gl_FragColor = texelColor;\n"
     "}\n";
@@ -69,13 +79,15 @@ static const char *BATTLE_SCREEN_GROUND_SHADER_FS =
 BattleScreen::BattleScreen(std::weak_ptr<ScreenStack> stack)
     : Screen(stack),
       camera_orbit_timer(0.0F),
-      sphere{{0.0F, 1.0F, 0.0F, 0.2F}, {1.0F, 1.0F, 1.0F, 0.2F}},
-      sphere_vel{{-1.105F, 1.0F, -3.3F}, {2.105F, 1.0F, 2.3F}},
-      sphere_acc{{0.0F, -SPHERE_DROP_ACC, 0.0F},
-                 {0.0F, -SPHERE_DROP_ACC, 0.0F}},
+      sphere{{-1.0F, 0.21F, 0.0F, 0.2F}, {0.0F, 0.21F, 0.0F, 0.2F}},
+      /*      sphere_vel{{-1.105F, 1.0F, -3.3F}, {2.105F, 1.0F, 2.3F}},*/
+      sphere_vel{{0.0F, 0.0F, 0.0F}, {0.0F, 0.0F, 0.0F}},
+      /*      sphere_acc{{0.0F, -SPHERE_DROP_ACC, 0.0F},*/
+      /*                 {0.0F, -SPHERE_DROP_ACC, 0.0F}},*/
+      sphere_acc{{0.0F, 0.0F, 0.0F}, {0.0F, 0.0F, 0.0F}},
       sphere_touch_point{{0.0F, 0.0F, 0.0F}, {0.0F, 0.0F, 0.0F}},
       floor_box{0.0F, -1.0F, 0.0F, 10.0F, 2.0F, 10.0F},
-      ground_pos{0.0F, 0.0F} {
+      ground_pos{0.0F, 0.0F, 0.0F, 0.0F} {
   camera.up.x = 0.0F;
   camera.up.y = 1.0F;
   camera.up.z = 0.0F;
@@ -109,6 +121,21 @@ BattleScreen::BattleScreen(std::weak_ptr<ScreenStack> stack)
   SetShaderValue(ground_shader, ground_shader_pos_idx, ground_pos,
                  SHADER_UNIFORM_VEC2);
 
+  ground_shader_other_pos_idx = GetShaderLocation(ground_shader, "other_pos");
+  SetShaderValue(ground_shader, ground_shader_pos_idx, ground_pos + 2,
+                 SHADER_UNIFORM_VEC2);
+
+  ground_shader_radius_idx = GetShaderLocation(ground_shader, "radius");
+  float temp = GROUND_PLANE_SIZE_F / 2.2F;
+  SetShaderValue(ground_shader, ground_shader_radius_idx, &temp,
+                 SHADER_UNIFORM_FLOAT);
+
+  ground_shader_ground_size_idx =
+      GetShaderLocation(ground_shader, "ground_size");
+  temp = GROUND_PLANE_SIZE_F;
+  SetShaderValue(ground_shader, ground_shader_ground_size_idx, &temp,
+                 SHADER_UNIFORM_FLOAT);
+
   ground_model.materials[0].shader = ground_shader;
 
 #ifndef NDEBUG
@@ -124,6 +151,37 @@ BattleScreen::~BattleScreen() {
 }
 
 bool BattleScreen::update(float dt, bool screen_resized) {
+  if (IsKeyDown(KEY_D)) {
+    sphere_vel[0].x = MOVEMENT_SPEED;
+  } else if (IsKeyDown(KEY_A)) {
+    sphere_vel[0].x = -MOVEMENT_SPEED;
+  } else {
+    sphere_vel[0].x = 0.0F;
+  }
+
+  if (IsKeyDown(KEY_W)) {
+    sphere_vel[0].z = -MOVEMENT_SPEED;
+  } else if (IsKeyDown(KEY_S)) {
+    sphere_vel[0].z = MOVEMENT_SPEED;
+  } else {
+    sphere_vel[0].z = 0.0F;
+  }
+
+  if (IsKeyDown(KEY_RIGHT)) {
+    sphere_vel[1].x = MOVEMENT_SPEED;
+  } else if (IsKeyDown(KEY_LEFT)) {
+    sphere_vel[1].x = -MOVEMENT_SPEED;
+  } else {
+    sphere_vel[1].x = 0.0F;
+  }
+
+  if (IsKeyDown(KEY_UP)) {
+    sphere_vel[1].z = -MOVEMENT_SPEED;
+  } else if (IsKeyDown(KEY_DOWN)) {
+    sphere_vel[1].z = MOVEMENT_SPEED;
+  } else {
+    sphere_vel[1].z = 0.0F;
+  }
   // camera_orbit_timer += dt;
   // if (camera_orbit_timer > CAMERA_ORBIT_TIME) {
   //   camera_orbit_timer -= CAMERA_ORBIT_TIME;
@@ -222,10 +280,10 @@ bool BattleScreen::update(float dt, bool screen_resized) {
     }
   }
 
-  ground_pos[0] = sphere[0].x / GROUND_PLANE_SIZE_F;
-  ground_pos[1] = sphere[0].z / GROUND_PLANE_SIZE_F;
-  SetShaderValue(ground_shader, ground_shader_pos_idx, ground_pos,
-                 SHADER_UNIFORM_VEC2);
+  ground_pos[0] = sphere[0].x;
+  ground_pos[1] = sphere[0].z;
+  ground_pos[2] = sphere[1].x;
+  ground_pos[3] = sphere[1].z;
 
   // TODO DEBUG
   camera.target.x = sphere[0].x;
@@ -238,7 +296,7 @@ bool BattleScreen::update(float dt, bool screen_resized) {
 
 bool BattleScreen::draw(RenderTexture *render_texture) {
   BeginTextureMode(*render_texture);
-  ClearBackground(BLUE);
+  ClearBackground(Color{0, 64, 0, 255});
   BeginMode3D(camera);
 
   DrawGrid(20, 0.2F);
@@ -252,7 +310,18 @@ bool BattleScreen::draw(RenderTexture *render_texture) {
                0.02F, RED);
   }
 
+  SetShaderValue(ground_shader, ground_shader_pos_idx, ground_pos,
+                 SHADER_UNIFORM_VEC2);
+  SetShaderValue(ground_shader, ground_shader_other_pos_idx, ground_pos + 2,
+                 SHADER_UNIFORM_VEC2);
   DrawModel(ground_model, Vector3{sphere[0].x, -0.01F, sphere[0].z}, 1.0F,
+            Color{0, 128, 0, 255});
+
+  SetShaderValue(ground_shader, ground_shader_pos_idx, ground_pos + 2,
+                 SHADER_UNIFORM_VEC2);
+  SetShaderValue(ground_shader, ground_shader_other_pos_idx, ground_pos,
+                 SHADER_UNIFORM_VEC2);
+  DrawModel(ground_model, Vector3{sphere[1].x, -0.01F, sphere[1].z}, 1.0F,
             Color{0, 128, 0, 255});
 
   EndMode3D();

@@ -11,6 +11,7 @@ SOURCES = \
 		../src/shared_data.cc \
 		../src/screen_debug.cc \
 		../src/screen_battle.cc \
+		../src/resource_handler.cc \
 		../third_party/3d_collision_helpers/src/sc_sacd.cpp
 
 HEADERS = \
@@ -18,6 +19,7 @@ HEADERS = \
 		../src/shared_data.h \
 		../src/screen_debug.h \
 		../src/screen_battle.h \
+		../src/resource_handler.h \
 		../third_party/3d_collision_helpers/src/sc_sacd.h
 
 OBJDIR = objdir

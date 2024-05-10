@@ -8,6 +8,7 @@ set(GanderBattle_SOURCES
   "${CMAKE_CURRENT_SOURCE_DIR}/shared_data.cc"
   "${CMAKE_CURRENT_SOURCE_DIR}/screen_debug.cc"
   "${CMAKE_CURRENT_SOURCE_DIR}/screen_battle.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/resource_handler.cc"
 )
 
 add_executable(GanderBattle ${GanderBattle_SOURCES})
@@ -57,4 +58,22 @@ else()
   add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/3d_collision_helpers" "${CMAKE_CURRENT_BINARY_DIR}/3d_collision_helpers")
   target_link_libraries(GanderBattle PUBLIC SC_3D_CollisionDetectionHelpers)
   target_include_directories(GanderBattle PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/3d_collision_helpers/src")
+endif()
+
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ResourcePacker/src/CMakeLists.txt")
+  message(WARNING "ResourcePacker not found, skipping... (ran \"git submodule update --init\"?)")
+else()
+  add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ResourcePacker/src" "${CMAKE_CURRENT_BINARY_DIR}/rp")
+  target_compile_definitions(ResourcePacker-s PRIVATE NDEBUG)
+  add_executable(ResourcePack "${CMAKE_CURRENT_SOURCE_DIR}/../src_build/rp_main.cpp")
+  target_link_libraries(ResourcePack PUBLIC ResourcePacker-s)
+  target_include_directories(ResourcePack PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ResourcePacker/src")
+
+  add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/data" COMMAND "${CMAKE_CURRENT_BINARY_DIR}/ResourcePack" ARGS "${CMAKE_CURRENT_BINARY_DIR}/data" "${CMAKE_CURRENT_BINARY_DIR}/../res" DEPENDS ResourcePack)
+  add_custom_target(ResourcePackData DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/data")
+  add_dependencies(GanderBattle ResourcePackData)
+
+  target_link_libraries(GanderBattle PUBLIC ResourcePacker-s)
+  target_include_directories(GanderBattle PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ResourcePacker/src")
+  target_compile_definitions(GanderBattle PRIVATE SEODISPARATE_RESOURCE_PACKER_AVAILABLE)
 endif()

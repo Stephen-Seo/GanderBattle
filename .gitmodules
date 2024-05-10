@@ -1,3 +1,6 @@
 [submodule "third_party/3d_collision_helpers"]
 	path = third_party/3d_collision_helpers
 	url = https://git.seodisparate.com/stephenseo/3d_collision_helpers.git
+[submodule "third_party/ResourcePacker"]
+	path = third_party/ResourcePacker
+	url = https://github.com/Stephen-Seo/ResourcePacker.git

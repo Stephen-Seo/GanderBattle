@@ -5,6 +5,7 @@
 #ifndef NDEBUG
 #include <iostream>
 #endif  // NDEBUG
+#include <utility>
 
 // third party includes
 #include <raylib.h>
@@ -148,7 +149,11 @@ void ScreenStack::handle_pending_actions() {
         // Intentionally left blank.
         break;
       default:
+#if __cpp_lib_unreachable == 202202L
+        std::unreachable();
+#else
         assert(false);  // Unreachable.
+#endif
         break;
     }
     actions.pop_front();

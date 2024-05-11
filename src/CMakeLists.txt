@@ -45,7 +45,7 @@ $<IF:$<CONFIG:Debug>,-Og,-fno-delete-null-pointer-checks -fno-strict-overflow -f
 -pie
 )
 
-target_compile_features(GanderBattle PUBLIC cxx_std_20)
+target_compile_features(GanderBattle PUBLIC cxx_std_23)
 
 find_package(raylib 5.0 REQUIRED)
 

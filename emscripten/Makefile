@@ -36,7 +36,7 @@ all: ${OUTDIR}/GanderBattle.html
 
 ${OUTDIR}/GanderBattle.html: ./raylib/libraylib.a ./raylib/raylib.h ./raylib/raymath.h ${OBJECTS} ${HEADERS}
 	@mkdir -p ${OUTDIR}
-	${CXX} -std=c++20 -o ${OUTDIR}/GanderBattle.html \
+	${CXX} -std=c++23 -o ${OUTDIR}/GanderBattle.html \
 		-s USE_GLFW=3 -Iraylib -Lraylib -lraylib \
 		-Llua -llua \
 		-sEXPORTED_FUNCTIONS=_main \
@@ -50,10 +50,10 @@ ${OUTDIR}/GanderBattle.html: ./raylib/libraylib.a ./raylib/raylib.h ./raylib/ray
 
 ${OBJDIR}/%.cc.o: $$(subst PREVDIR,..,%.cc) ${HEADERS}
 	@mkdir -p "$(dir $@)"
-	${CXX} -std=c++20 -I ./raylib -c ${OTHER_FLAGS} -o $@ $<
+	${CXX} -std=c++23 -I ./raylib -c ${OTHER_FLAGS} -o $@ $<
 ${OBJDIR}/%.cpp.o: $$(subst PREVDIR,..,%.cpp) ${HEADERS}
 	@mkdir -p "$(dir $@)"
-	${CXX} -std=c++20 -I ./raylib -c ${OTHER_FLAGS} -o $@ $<
+	${CXX} -std=c++23 -I ./raylib -c ${OTHER_FLAGS} -o $@ $<
 
 .PHONY: clean
 

@@ -95,4 +95,30 @@ else()
   target_link_libraries(GanderBattle PUBLIC ResourcePacker-s)
   target_include_directories(GanderBattle PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ResourcePacker/src")
   target_compile_definitions(GanderBattle PRIVATE SEODISPARATE_RESOURCE_PACKER_AVAILABLE)
+
+  if (DEFINED DO_NOT_CREATE_PACKFILE)
+    message(NOTICE "Not creating packfile \"data\"...")
+    set(DO_NOT_CREATE_PACKFILE "${DO_NOT_CREATE_PACKFILE}")
+  else()
+    message(NOTICE "Creating packfile \"data\" and making executable depend on it...")
+
+    add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/rpacker"
+      COMMAND g++
+        ARGS
+          "${CMAKE_CURRENT_SOURCE_DIR}/../src_build/rp_main.cpp"
+          "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ResourcePacker/src/ResourcePacker.cpp"
+          "-o" "${CMAKE_CURRENT_BINARY_DIR}/rpacker"
+          "-I${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ResourcePacker/src"
+          "-DNDEBUG"
+    )
+    add_custom_target(RPacker DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/rpacker")
+    add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/data"
+      COMMAND "${CMAKE_CURRENT_BINARY_DIR}/rpacker"
+        ARGS "${CMAKE_CURRENT_BINARY_DIR}/data"
+        "${CMAKE_CURRENT_BINARY_DIR}/../res"
+      DEPENDS RPacker
+    )
+    add_custom_target(ResourcePackData DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/data")
+    add_dependencies(GanderBattle ResourcePackData)
+  endif()
 endif()

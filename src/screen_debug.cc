@@ -166,7 +166,7 @@ bool DebugScreen::update(float dt, bool screen_resized) {
       console_current.clear();
       while (console.size() > 25) {
         // Limit size of history.
-        console.erase(console.begin());
+        console.pop_front();
       }
     }
 
@@ -194,8 +194,8 @@ bool DebugScreen::draw(RenderTexture *render_texture) {
     DrawText(console_current.c_str(), 12, SCREEN_HEIGHT - offset_y, 20,
              RAYWHITE);
     offset_y += 24;
-    for (unsigned long idx = console.size(); idx-- > 0;) {
-      DrawText(console[idx].c_str(), 5, SCREEN_HEIGHT - offset_y, 20, RAYWHITE);
+    for (auto riter = console.crbegin(); riter != console.crend(); ++riter) {
+      DrawText(riter->c_str(), 5, SCREEN_HEIGHT - offset_y, 20, RAYWHITE);
       offset_y += 24;
     }
   } else {

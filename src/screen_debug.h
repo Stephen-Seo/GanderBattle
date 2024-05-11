@@ -1,6 +1,9 @@
 #ifndef SEODISPARATE_COM_GANDER_BATTLE_SCREEN_DEBUG_H_
 #define SEODISPARATE_COM_GANDER_BATTLE_SCREEN_DEBUG_H_
 
+// Standard library includes.
+#include <deque>
+
 // Third-party includes.
 
 // lua
@@ -23,7 +26,7 @@ class DebugScreen : public Screen {
  private:
   lua_State *lua_state;
   SharedData *shared;
-  std::vector<std::string> console;
+  std::deque<std::string> console;
   std::string console_current;
 };
 

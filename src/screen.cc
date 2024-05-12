@@ -93,7 +93,9 @@ void ScreenStack::update(float dt) {
 #endif  // NDEBUG
     push_screen(Screen::new_screen<BlankScreen>(self_weak));
     if (!overlay_screen) {
+#ifndef NDEBUG
       std::cerr << "Setting overlay_screen to DebugScreen...\n";
+#endif  // NDEBUG
       set_overlay_screen<DebugScreen>();
     }
     update(dt);

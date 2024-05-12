@@ -3,6 +3,7 @@
 
 // Standard library includes.
 #include <deque>
+#include <optional>
 
 // Third-party includes.
 
@@ -28,6 +29,7 @@ class DebugScreen : public Screen {
   SharedData *shared;
   std::deque<std::string> console;
   std::string console_current;
+  std::optional<int> console_x_offset;
 };
 
 #endif

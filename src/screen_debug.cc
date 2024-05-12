@@ -111,7 +111,8 @@ int lua_generic_print(lua_State *l) {
 DebugScreen::DebugScreen(std::weak_ptr<ScreenStack> stack)
     : Screen(stack),
       lua_state(lua_newstate(alloc_for_lua, stack.lock().get())),
-      shared(&stack.lock()->get_shared_data()) {
+      shared(&stack.lock()->get_shared_data()),
+      console_x_offset(0) {
   luaL_requiref(lua_state, "string", luaopen_string, 1);
   luaL_requiref(lua_state, "table", luaopen_table, 1);
   luaL_requiref(lua_state, "math", luaopen_math, 1);
@@ -160,6 +161,7 @@ bool DebugScreen::update(float dt, bool screen_resized) {
     if (IsKeyPressed(KEY_BACKSPACE)) {
       if (!console_current.empty()) {
         console_current.pop_back();
+        console_x_offset = std::nullopt;
       }
     } else if (IsKeyPressed(KEY_ENTER)) {
       // +1
@@ -180,6 +182,7 @@ bool DebugScreen::update(float dt, bool screen_resized) {
 
       console.push_back(console_current);
       console_current.clear();
+      console_x_offset = std::nullopt;
       while (console.size() > 25) {
         // Limit size of history.
         console.pop_front();
@@ -192,8 +195,18 @@ bool DebugScreen::update(float dt, bool screen_resized) {
       if (just_enabled && c == '`') {
       } else if (c != 0 && c < 128) {
         console_current.push_back((char)c);
+        console_x_offset = std::nullopt;
       }
     } while (c != 0);
+
+    if (!console_x_offset.has_value()) {
+      auto text_width = MeasureText(console_current.c_str(), 20);
+      if (text_width + 12 > SCREEN_WIDTH) {
+        console_x_offset = SCREEN_WIDTH - 12 - text_width;
+      } else {
+        console_x_offset = 0;
+      }
+    }
   }
 
   return !shared->enable_console;
@@ -206,9 +219,10 @@ bool DebugScreen::draw(RenderTexture *render_texture) {
     DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Color{0, 0, 0, 64});
 
     int offset_y = 24;
-    DrawText(">", 5, SCREEN_HEIGHT - offset_y, 20, RAYWHITE);
-    DrawText(console_current.c_str(), 12, SCREEN_HEIGHT - offset_y, 20,
+    DrawText(">", 5 + console_x_offset.value(), SCREEN_HEIGHT - offset_y, 20,
              RAYWHITE);
+    DrawText(console_current.c_str(), 12 + console_x_offset.value(),
+             SCREEN_HEIGHT - offset_y, 20, RAYWHITE);
     offset_y += 24;
     for (auto riter = console.crbegin(); riter != console.crend(); ++riter) {
       DrawText(riter->c_str(), 5, SCREEN_HEIGHT - offset_y, 20, RAYWHITE);

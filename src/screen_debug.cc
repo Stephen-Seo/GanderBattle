@@ -71,7 +71,9 @@ int lua_generic_print(lua_State *l) {
   std::string output;
   int size = lua_gettop(l);
   for (int idx = 1; idx <= size; ++idx) {
-    if (lua_isinteger(l, idx)) {
+    if (lua_isnil(l, idx)) {
+      output.append("nil"s);
+    } else if (lua_isinteger(l, idx)) {
       auto integer = lua_tointeger(l, idx);
       if (!output.empty()) {
         output.push_back(' ');
@@ -95,12 +97,12 @@ int lua_generic_print(lua_State *l) {
         output.push_back(' ');
       }
       if (b) {
-        output.append(std::string("true"));
+        output.append("true"s);
       } else {
-        output.append(std::string("false"));
+        output.append("false"s);
       }
     } else {
-      output.append(std::string("unsupported_type"));
+      output.append("unsupported_type"s);
     }
   }
   ss->get_shared_data().outputs.push_back(output);
@@ -150,7 +152,8 @@ DebugScreen::~DebugScreen() { lua_close(lua_state); }
 
 bool DebugScreen::update(float dt, bool screen_resized) {
   bool just_enabled = false;
-  if (IsKeyPressed(KEY_GRAVE)) {
+  if (IsKeyPressed(KEY_GRAVE) && !IsKeyDown(KEY_LEFT_SHIFT) &&
+      !IsKeyDown(KEY_RIGHT_SHIFT)) {
     shared->enable_console = !shared->enable_console;
     just_enabled = shared->enable_console;
   }

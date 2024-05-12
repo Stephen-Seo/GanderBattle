@@ -164,6 +164,8 @@ bool DebugScreen::update(float dt, bool screen_resized) {
         console_x_offset = std::nullopt;
       }
     } else if (IsKeyPressed(KEY_ENTER)) {
+      console.push_back(console_current);
+
       // +1
       int result = luaL_loadstring(lua_state, console_current.c_str());
       if (result != LUA_OK) {
@@ -180,7 +182,6 @@ bool DebugScreen::update(float dt, bool screen_resized) {
         }
       }
 
-      console.push_back(console_current);
       console_current.clear();
       console_x_offset = std::nullopt;
       while (console.size() > 25) {

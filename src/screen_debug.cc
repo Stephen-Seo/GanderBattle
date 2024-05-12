@@ -84,7 +84,7 @@ int lua_generic_print(lua_State *l) {
       if (!output.empty()) {
         output.push_back(' ');
       }
-      output.append(std::string(s));
+      output.append(s);
     } else if (lua_isnumber(l, idx)) {
       auto number = lua_tonumber(l, idx);
       if (!output.empty()) {
@@ -116,6 +116,7 @@ DebugScreen::DebugScreen(std::weak_ptr<ScreenStack> stack)
     : Screen(stack),
       lua_state(lua_newstate(alloc_for_lua, stack.lock().get())),
       shared(&stack.lock()->get_shared_data()),
+      console_current("> "s),
       console_x_offset(0) {
   luaL_requiref(lua_state, "string", luaopen_string, 1);
   luaL_requiref(lua_state, "table", luaopen_table, 1);
@@ -164,30 +165,34 @@ bool DebugScreen::update(float dt, bool screen_resized) {
     }
     shared->outputs.clear();
     if (IsKeyPressed(KEY_BACKSPACE)) {
-      if (!console_current.empty()) {
+      if (console_current.size() > 2) {
         console_current.pop_back();
         console_x_offset = std::nullopt;
       }
     } else if (IsKeyPressed(KEY_ENTER)) {
-      console.push_back("> "s + console_current);
+      console.push_back(console_current);
 
-      // +1
-      int result = luaL_loadstring(lua_state, console_current.c_str());
-      if (result != LUA_OK) {
-        console.push_back(std::string(lua_tostring(lua_state, -1)));
-        // -1
-        lua_pop(lua_state, 1);
-      } else {
-        // -1, +1 on error.
-        result = lua_pcall(lua_state, 0, 0, 0);
+      if (console_current.size() > 2) {
+        // +1
+        int result = luaL_loadstring(lua_state, console_current.c_str() + 2);
         if (result != LUA_OK) {
-          console.push_back(std::string(lua_tostring(lua_state, -1)));
+          console.push_back(lua_tostring(lua_state, -1));
           // -1
           lua_pop(lua_state, 1);
+        } else {
+          // -1, +1 on error.
+          result = lua_pcall(lua_state, 0, 0, 0);
+          if (result != LUA_OK) {
+            console.push_back(lua_tostring(lua_state, -1));
+            // -1
+            lua_pop(lua_state, 1);
+          }
         }
+      } else {
+        console.push_back("Empty input."s);
       }
 
-      console_current.clear();
+      console_current = "> "s;
       console_x_offset = std::nullopt;
       while (console.size() > 25) {
         // Limit size of history.
@@ -207,8 +212,8 @@ bool DebugScreen::update(float dt, bool screen_resized) {
 
     if (!console_x_offset.has_value()) {
       auto text_width = MeasureText(console_current.c_str(), 20);
-      if (text_width + 12 > SCREEN_WIDTH) {
-        console_x_offset = SCREEN_WIDTH - 12 - text_width;
+      if (text_width + 5 > SCREEN_WIDTH) {
+        console_x_offset = SCREEN_WIDTH - 5 - text_width;
       } else {
         console_x_offset = 0;
       }
@@ -225,9 +230,7 @@ bool DebugScreen::draw(RenderTexture *render_texture) {
     DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Color{0, 0, 0, 64});
 
     int offset_y = 24;
-    DrawText(">", 5 + console_x_offset.value(), SCREEN_HEIGHT - offset_y, 20,
-             RAYWHITE);
-    DrawText(console_current.c_str(), 12 + console_x_offset.value(),
+    DrawText(console_current.c_str(), 5 + console_x_offset.value(),
              SCREEN_HEIGHT - offset_y, 20, RAYWHITE);
     offset_y += 24;
     for (auto riter = console.crbegin(); riter != console.crend(); ++riter) {

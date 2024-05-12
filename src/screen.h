@@ -50,13 +50,23 @@ class ScreenStack {
   using Weak = std::weak_ptr<ScreenStack>;
 
  private:
-  enum Action { PUSH_SCREEN, POP_SCREEN, CLEAR_SCREENS, CONSTRUCT_SCREEN, NOP };
+  enum Action {
+    PUSH_SCREEN,
+    POP_SCREEN,
+    CLEAR_SCREENS,
+    CONSTRUCT_SCREEN,
+    NOP,
+    SET_OVERLAY_SCREEN,
+    UNSET_OVERLAY_SCREEN
+  };
 
   struct PendingAction {
     PendingAction();
     PendingAction(Action action);
     PendingAction(Screen::Ptr&&);
     PendingAction(std::function<Screen::Ptr(ScreenStack::Weak)>&&);
+    PendingAction(Action action,
+                  std::function<Screen::Ptr(ScreenStack::Weak)>&&);
 
     // No copy.
     PendingAction(const PendingAction&) = delete;
@@ -107,11 +117,22 @@ class ScreenStack {
   SharedData& get_shared_data();
   const SharedData& get_shared_data() const;
 
+  bool is_overlay_screen_set() const;
+
+  template <typename SubScreen>
+  void set_overlay_screen();
+
+  template <typename SubScreen, typename... Args>
+  void set_overlay_screen_args(Args... args);
+
+  void unset_overlay_screen();
+
  private:
   ScreenStack();
 
   void handle_pending_actions();
 
+  Screen::Ptr overlay_screen;
   std::unique_ptr<RenderTexture> render_texture;
   Weak self_weak;
   std::vector<Screen::Ptr> stack;
@@ -147,6 +168,22 @@ void ScreenStack::push_constructing_screen_args(Args... args) {
   actions.emplace_back([args...](ScreenStack::Weak ss) -> Screen::Ptr {
     return Screen::new_screen_args<SubScreen>(ss, args...);
   });
+}
+
+template <typename SubScreen>
+void ScreenStack::set_overlay_screen() {
+  actions.emplace_back(Action::SET_OVERLAY_SCREEN,
+                       [](ScreenStack::Weak ss) -> Screen::Ptr {
+                         return Screen::new_screen<SubScreen>(ss);
+                       });
+}
+
+template <typename SubScreen, typename... Args>
+void ScreenStack::set_overlay_screen_args(Args... args) {
+  actions.emplace_back(Action::SET_OVERLAY_SCREEN,
+                       [args...](ScreenStack::Weak ss) -> Screen::Ptr {
+                         return Screen::new_screen<SubScreen>(ss, args...);
+                       });
 }
 
 #endif

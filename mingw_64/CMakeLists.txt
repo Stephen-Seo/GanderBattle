@@ -7,6 +7,7 @@ set(GanderBattle_SOURCES
   "${CMAKE_CURRENT_SOURCE_DIR}/../src/screen.cc"
   "${CMAKE_CURRENT_SOURCE_DIR}/../src/shared_data.cc"
   "${CMAKE_CURRENT_SOURCE_DIR}/../src/screen_debug.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../src/screen_blank.cc"
   "${CMAKE_CURRENT_SOURCE_DIR}/../src/screen_battle.cc"
   "${CMAKE_CURRENT_BINARY_DIR}/resource_handler.cc"
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/3d_collision_helpers/src/sc_sacd.cpp"

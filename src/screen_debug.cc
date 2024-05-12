@@ -19,6 +19,8 @@ extern "C" {
 #include "screen.h"
 #include "screen_battle.h"
 
+using namespace std::string_literals;
+
 // #############################################################################
 //  BEGIN Lua stuff
 // #############################################################################
@@ -164,7 +166,7 @@ bool DebugScreen::update(float dt, bool screen_resized) {
         console_x_offset = std::nullopt;
       }
     } else if (IsKeyPressed(KEY_ENTER)) {
-      console.push_back(console_current);
+      console.push_back("> "s + console_current);
 
       // +1
       int result = luaL_loadstring(lua_state, console_current.c_str());

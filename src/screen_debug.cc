@@ -50,7 +50,17 @@ int lua_reset_stack(lua_State *l) {
   ScreenStack *ss = get_lua_screen_stack(l);
   ss->clear_screens();
   ss->push_constructing_screen<BattleScreen>();
-  ss->push_constructing_screen<DebugScreen>();
+  if (!ss->is_overlay_screen_set()) {
+    ss->set_overlay_screen<DebugScreen>();
+  }
+  ss->get_shared_data().outputs.push_back("Reset Stack.");
+  return 0;
+}
+
+int lua_clear_stack(lua_State *l) {
+  ScreenStack *ss = get_lua_screen_stack(l);
+  ss->clear_screens();
+  ss->get_shared_data().outputs.push_back("Cleared Stack.");
   return 0;
 }
 
@@ -114,11 +124,17 @@ DebugScreen::DebugScreen(std::weak_ptr<ScreenStack> stack)
   // -2
   lua_settable(lua_state, LUA_REGISTRYINDEX);
 
-  // Put "reset()" into global.
+  // Put "reset_stack()" into global.
   // +1
   lua_pushcfunction(lua_state, lua_reset_stack);
   // -1
   lua_setglobal(lua_state, "reset_stack");
+
+  // Put "clear_stack()" into global.
+  // +1
+  lua_pushcfunction(lua_state, lua_clear_stack);
+  // -1
+  lua_setglobal(lua_state, "clear_stack");
 
   // Put "gen_print()" into global.
   // +1

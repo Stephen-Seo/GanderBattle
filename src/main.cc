@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   stack->push_constructing_screen<BattleScreen>();
   stack->set_overlay_screen<DebugScreen>();
   global_screen_stack_ptr = stack.get();
-  SetWindowSize(call_js_get_canvas_width(), call_js_get_canvas_height());
+  SetWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
   emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, nullptr, false,
                                  resize_event_callback);

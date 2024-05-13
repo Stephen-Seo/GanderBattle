@@ -8,7 +8,6 @@ endif
 SOURCES = \
 		../src/ems.cc \
 		../src/main.cc \
-		../src/constants.cc \
 		../src/screen.cc \
 		../src/shared_data.cc \
 		../src/screen_debug.cc \

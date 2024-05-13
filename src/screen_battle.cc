@@ -386,7 +386,7 @@ bool BattleScreen::draw(RenderTexture *render_texture) {
                  SHADER_UNIFORM_VEC2);
   SetShaderValue(ground_shader, ground_shader_other_pos_idx, ground_pos + 2,
                  SHADER_UNIFORM_VEC2);
-  DrawModel(ground_model, Vector3{sphere[0].x, -0.0101F, sphere[0].z}, 1.0F,
+  DrawModel(ground_model, Vector3{sphere[0].x, -0.011F, sphere[0].z}, 1.0F,
             Color{0, 128, 0, 255});
 
   SetShaderValue(ground_shader, ground_shader_pos_idx, ground_pos + 2,

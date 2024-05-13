@@ -3,6 +3,7 @@
 
 #include <deque>
 #include <functional>
+#include <list>
 #include <memory>
 #include <variant>
 #include <vector>
@@ -38,6 +39,8 @@ class Screen {
   virtual bool update(float dt, bool screen_resized) = 0;
   /// Return true if next screen should be drawn.
   virtual bool draw(RenderTexture* render_texture) = 0;
+
+  virtual std::list<std::string> get_known_flags() const = 0;
 
  protected:
   Screen(std::weak_ptr<ScreenStack> stack);
@@ -126,6 +129,8 @@ class ScreenStack {
   void set_overlay_screen_args(Args... args);
 
   void unset_overlay_screen();
+
+  std::list<std::string> get_known_flags() const;
 
  private:
   ScreenStack();

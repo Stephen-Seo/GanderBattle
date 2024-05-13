@@ -108,6 +108,117 @@ int lua_generic_print(lua_State *l) {
   ss->get_shared_data().outputs.push_back(output);
   return 0;
 }
+
+int lua_get_flag(lua_State *l) {
+  ScreenStack *ss = get_lua_screen_stack(l);
+
+  int top = lua_gettop(l);
+  if (top != 1) {
+    ss->get_shared_data().outputs.push_back(
+        "Not 1 arg! usage: get_flag(\"name\") returns boolean");
+    return 0;
+  } else if (!lua_isstring(l, 1)) {
+    ss->get_shared_data().outputs.push_back(
+        "1st arg not string! usage: get_flag(\"name\") returns boolean");
+    return 0;
+  }
+  const char *name = lua_tostring(l, 1);
+  auto result = ss->get_shared_data().get_flag(name);
+
+  if (result.has_value() && result.value()) {
+    lua_pushboolean(l, 1);
+  } else {
+    lua_pushboolean(l, 0);
+  }
+  return 1;
+}
+
+int lua_set_flag(lua_State *l) {
+  ScreenStack *ss = get_lua_screen_stack(l);
+
+  int top = lua_gettop(l);
+  if (top != 2) {
+    ss->get_shared_data().outputs.push_back(
+        "Not 2 args! usage: set_flag(\"name\", boolean) returns prev boolean");
+    return 0;
+  } else if (!lua_isstring(l, 1)) {
+    ss->get_shared_data().outputs.push_back(
+        "1st arg not string! usage: set_flag(\"name\", boolean) returns prev "
+        "boolean");
+    return 0;
+  } else if (!lua_isboolean(l, 2)) {
+    ss->get_shared_data().outputs.push_back(
+        "2nd arg not boolean! usage: set_flag(\"name\", boolean) returns prev "
+        "boolean");
+    return 0;
+  }
+
+  const char *name = lua_tostring(l, 1);
+  auto b = lua_toboolean(l, 2);
+  auto result = ss->get_shared_data().set_flag_lua(name, b != 0);
+
+  if (!result.has_value()) {
+    ss->get_shared_data().outputs.push_back("set_flag(...) invalid name!");
+    return 0;
+  } else {
+    lua_pushboolean(l, result.value() ? 1 : 0);
+    return 1;
+  }
+}
+
+int lua_toggle_flag(lua_State *l) {
+  ScreenStack *ss = get_lua_screen_stack(l);
+
+  int top = lua_gettop(l);
+  if (top != 1) {
+    ss->get_shared_data().outputs.push_back(
+        "Not 1 arg! usage: toggle_flag(\"name\") returns boolean");
+    return 0;
+  } else if (!lua_isstring(l, 1)) {
+    ss->get_shared_data().outputs.push_back(
+        "1st arg not string! usage: toggle_flag(\"name\") returns boolean");
+    return 0;
+  }
+
+  const char *name = lua_tostring(l, 1);
+  auto result = ss->get_shared_data().toggle_flag_lua(name);
+
+  if (!result.has_value()) {
+    ss->get_shared_data().outputs.push_back("toggle_flag(...) invalid name!");
+    return 0;
+  } else {
+    lua_pushboolean(l, result.value() ? 1 : 0);
+    return 1;
+  }
+}
+
+int lua_get_known_flags(lua_State *l) {
+  ScreenStack *ss = get_lua_screen_stack(l);
+
+  auto flags = ss->get_known_flags();
+  ss->get_shared_data().outputs.push_back("  Known flags:");
+  for (const auto &flag : flags) {
+    ss->get_shared_data().outputs.push_back(flag);
+  }
+
+  return 0;
+}
+
+int lua_get_help(lua_State *l) {
+  ScreenStack *ss = get_lua_screen_stack(l);
+
+  ss->get_shared_data().outputs.push_back("  Functions:");
+  ss->get_shared_data().outputs.push_back("help()");
+  ss->get_shared_data().outputs.push_back("get_known_flags()");
+  ss->get_shared_data().outputs.push_back("toggle_flag(\"name\")");
+  ss->get_shared_data().outputs.push_back("get_flag(\"name\")");
+  ss->get_shared_data().outputs.push_back("set_flag(\"name\", boolean)");
+  ss->get_shared_data().outputs.push_back("gen_print(...)");
+  ss->get_shared_data().outputs.push_back("reset_stack()");
+  ss->get_shared_data().outputs.push_back("clear_stack()");
+
+  return 0;
+}
 // #############################################################################
 //  END Lua stuff
 // #############################################################################
@@ -116,6 +227,7 @@ DebugScreen::DebugScreen(std::weak_ptr<ScreenStack> stack)
     : Screen(stack),
       lua_state(lua_newstate(alloc_for_lua, stack.lock().get())),
       shared(&stack.lock()->get_shared_data()),
+      console{"Use \"help()\" for available functions."s},
       console_current("> "s),
       console_x_offset(0) {
   luaL_requiref(lua_state, "string", luaopen_string, 1);
@@ -147,6 +259,32 @@ DebugScreen::DebugScreen(std::weak_ptr<ScreenStack> stack)
   lua_pushcfunction(lua_state, lua_generic_print);
   // -1
   lua_setglobal(lua_state, "gen_print");
+
+  // Put flag related fns into global.
+  // +1
+  lua_pushcfunction(lua_state, lua_get_flag);
+  // -1
+  lua_setglobal(lua_state, "get_flag");
+
+  // +1
+  lua_pushcfunction(lua_state, lua_set_flag);
+  // -1
+  lua_setglobal(lua_state, "set_flag");
+
+  // +1
+  lua_pushcfunction(lua_state, lua_toggle_flag);
+  // -1
+  lua_setglobal(lua_state, "toggle_flag");
+
+  // +1
+  lua_pushcfunction(lua_state, lua_get_known_flags);
+  // -1
+  lua_setglobal(lua_state, "get_known_flags");
+
+  // +1
+  lua_pushcfunction(lua_state, lua_get_help);
+  // -1
+  lua_setglobal(lua_state, "help");
 }
 
 DebugScreen::~DebugScreen() { lua_close(lua_state); }
@@ -155,11 +293,11 @@ bool DebugScreen::update(float dt, bool screen_resized) {
   bool just_enabled = false;
   if (IsKeyPressed(KEY_GRAVE) && !IsKeyDown(KEY_LEFT_SHIFT) &&
       !IsKeyDown(KEY_RIGHT_SHIFT)) {
-    shared->enable_console = !shared->enable_console;
-    just_enabled = shared->enable_console;
+    just_enabled = shared->toggle_flag(enable_console_flag);
   }
 
-  if (shared->enable_console) {
+  if (auto optb = shared->get_flag(enable_console_flag);
+      optb.has_value() && optb.value()) {
     for (auto output : shared->outputs) {
       console.push_back(output);
     }
@@ -220,13 +358,15 @@ bool DebugScreen::update(float dt, bool screen_resized) {
     }
   }
 
-  return !shared->enable_console;
+  auto optb = shared->get_flag(enable_console_flag);
+  return !(optb.has_value() && optb.value());
 }
 
 bool DebugScreen::draw(RenderTexture *render_texture) {
   BeginTextureMode(*render_texture);
 
-  if (shared->enable_console) {
+  if (auto optb = shared->get_flag(enable_console_flag);
+      optb.has_value() && optb.value()) {
     DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Color{0, 0, 0, 64});
 
     int offset_y = 24;
@@ -240,14 +380,12 @@ bool DebugScreen::draw(RenderTexture *render_texture) {
   } else {
     std::string draw_text = std::to_string(GetFPS());
     DrawText(draw_text.c_str(), 10, 10, 30, RAYWHITE);
-
-    if (shared->enable_auto_movement) {
-      DrawText("Auto movement enabled.", 10, SCREEN_HEIGHT - 40, 30, RAYWHITE);
-    } else {
-      DrawText("Auto movement disabled.", 10, SCREEN_HEIGHT - 40, 30, RAYWHITE);
-    }
   }
 
   EndTextureMode();
   return true;
+}
+
+std::list<std::string> DebugScreen::get_known_flags() const {
+  return {enable_console_flag};
 }

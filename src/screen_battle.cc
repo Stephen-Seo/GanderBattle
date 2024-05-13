@@ -11,6 +11,7 @@
 #endif
 
 // Local includes.
+#include "constants.h"
 #include "ems.h"
 #include "resource_handler.h"
 
@@ -91,7 +92,7 @@ BattleScreen::BattleScreen(std::weak_ptr<ScreenStack> stack)
       sphere_touch_point{{0.0F, 0.0F, 0.0F}, {0.0F, 0.0F, 0.0F}},
       floor_box{0.0F, -1.0F, 0.0F, 10.0F, 2.0F, 10.0F},
       ground_pos{0.0F, 0.0F, 0.0F, 0.0F},
-      enable_auto_movement(false) {
+      prev_auto_move_flag_value(false) {
   camera.up.x = 0.0F;
   camera.up.y = 1.0F;
   camera.up.z = 0.0F;
@@ -165,10 +166,11 @@ BattleScreen::~BattleScreen() {
 }
 
 bool BattleScreen::update(float dt, bool screen_resized) {
-  if (IsKeyPressed(KEY_SPACE)) {
-    enable_auto_movement = !enable_auto_movement;
-    stack.lock()->get_shared_data().enable_auto_movement = enable_auto_movement;
-    if (enable_auto_movement) {
+  auto &shared_data = stack.lock()->get_shared_data();
+  if (auto flag_opt = shared_data.get_flag(enable_auto_move_flag);
+      flag_opt.has_value() && prev_auto_move_flag_value != flag_opt.value()) {
+    prev_auto_move_flag_value = flag_opt.value();
+    if (flag_opt.value()) {
       sphere_vel[0].x =
           (call_js_get_random() - 0.5F) * 2.0F * AUTOMOVE_DIR_VAR_MAX;
       sphere_vel[0].y =
@@ -213,7 +215,8 @@ bool BattleScreen::update(float dt, bool screen_resized) {
     }
   }
 
-  if (!enable_auto_movement) {
+  if (auto flag_opt = shared_data.get_flag(enable_auto_move_flag);
+      !flag_opt.has_value() || !flag_opt.value()) {
     if (IsKeyDown(KEY_D)) {
       sphere_vel[0].x = MOVEMENT_SPEED;
     } else if (IsKeyDown(KEY_A)) {
@@ -274,44 +277,49 @@ bool BattleScreen::update(float dt, bool screen_resized) {
     sphere[idx].z += sphere_vel[idx].z * dt;
   }
 
-  // Check collision with other.
-  if (sphere_collided && !SC_SACD_Sphere_Collision(sphere[0], sphere[1])) {
-    sphere_collided = false;
-  } else if (SC_SACD_Sphere_Collision(sphere[0], sphere[1])) {
-    SC_SACD_Vec3 normal{sphere[0].x - sphere[1].x, sphere[0].y - sphere[1].y,
-                        sphere[0].z - sphere[1].z};
+  if (auto flag_opt = shared_data.get_flag(enable_auto_move_flag);
+      flag_opt.has_value() && flag_opt.value()) {
+    // Check collision with other.
+    bool collided = SC_SACD_Sphere_Collision(sphere[0], sphere[1]) != 0;
+    if (sphere_collided && !collided) {
+      sphere_collided = false;
+    } else if (collided) {
+      SC_SACD_Vec3 normal{sphere[0].x - sphere[1].x, sphere[0].y - sphere[1].y,
+                          sphere[0].z - sphere[1].z};
 
-    // Move spheres to point before collision.
+      // Move spheres to point before collision.
 
-    sphere[0].x = sphere_prev_pos[0].x;
-    sphere[0].y = sphere_prev_pos[0].y;
-    sphere[0].z = sphere_prev_pos[0].z;
-    sphere[1].x = sphere_prev_pos[1].x;
-    sphere[1].y = sphere_prev_pos[1].y;
-    sphere[1].z = sphere_prev_pos[1].z;
+      sphere[0].x = sphere_prev_pos[0].x;
+      sphere[0].y = sphere_prev_pos[0].y;
+      sphere[0].z = sphere_prev_pos[0].z;
+      sphere[1].x = sphere_prev_pos[1].x;
+      sphere[1].y = sphere_prev_pos[1].y;
+      sphere[1].z = sphere_prev_pos[1].z;
 
-    // Get projection onto normal.
+      // Get projection onto normal.
 
-    float temp = SC_SACD_Dot_Product(normal, normal);
+      float temp = SC_SACD_Dot_Product(normal, normal);
 
-    float dot_product[2] = {SC_SACD_Dot_Product(normal, sphere_vel[0]) / temp,
-                            SC_SACD_Dot_Product(normal, sphere_vel[1]) / temp};
-    SC_SACD_Vec3 proj[2] = {
-        SC_SACD_Vec3{dot_product[0] * normal.x, dot_product[0] * normal.y,
-                     dot_product[0] * normal.z},
-        SC_SACD_Vec3{dot_product[1] * normal.x, dot_product[1] * normal.y,
-                     dot_product[1] * normal.z}};
+      float dot_product[2] = {
+          SC_SACD_Dot_Product(normal, sphere_vel[0]) / temp,
+          SC_SACD_Dot_Product(normal, sphere_vel[1]) / temp};
+      SC_SACD_Vec3 proj[2] = {
+          SC_SACD_Vec3{dot_product[0] * normal.x, dot_product[0] * normal.y,
+                       dot_product[0] * normal.z},
+          SC_SACD_Vec3{dot_product[1] * normal.x, dot_product[1] * normal.y,
+                       dot_product[1] * normal.z}};
 
-    // Get reflection over normal, and negate it to get desired result.
+      // Get reflection over normal, and negate it to get desired result.
 
-    sphere_vel[0].x = -(proj[0].x * 2.0F - sphere_vel[0].x);
-    sphere_vel[0].y = -(proj[0].y * 2.0F - sphere_vel[0].y);
-    sphere_vel[0].z = -(proj[0].z * 2.0F - sphere_vel[0].z);
-    sphere_vel[1].x = -(proj[1].x * 2.0F - sphere_vel[1].x);
-    sphere_vel[1].y = -(proj[1].y * 2.0F - sphere_vel[1].y);
-    sphere_vel[1].z = -(proj[1].z * 2.0F - sphere_vel[1].z);
+      sphere_vel[0].x = -(proj[0].x * 2.0F - sphere_vel[0].x);
+      sphere_vel[0].y = -(proj[0].y * 2.0F - sphere_vel[0].y);
+      sphere_vel[0].z = -(proj[0].z * 2.0F - sphere_vel[0].z);
+      sphere_vel[1].x = -(proj[1].x * 2.0F - sphere_vel[1].x);
+      sphere_vel[1].y = -(proj[1].y * 2.0F - sphere_vel[1].y);
+      sphere_vel[1].z = -(proj[1].z * 2.0F - sphere_vel[1].z);
 
-    sphere_collided = true;
+      sphere_collided = true;
+    }
   }
 
   // Check collision with wall.
@@ -391,4 +399,8 @@ bool BattleScreen::draw(RenderTexture *render_texture) {
   EndMode3D();
   EndTextureMode();
   return true;
+}
+
+std::list<std::string> BattleScreen::get_known_flags() const {
+  return {enable_auto_move_flag};
 }

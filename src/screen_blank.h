@@ -8,8 +8,10 @@ class BlankScreen : public Screen {
   BlankScreen(ScreenStack::Weak ss);
   virtual ~BlankScreen();
 
-  virtual bool update(float dt, bool screen_resized);
-  virtual bool draw(RenderTexture* render_texture);
+  virtual bool update(float dt, bool screen_resized) override;
+  virtual bool draw(RenderTexture* render_texture) override;
+
+  virtual std::list<std::string> get_known_flags() const override;
 };
 
 #endif

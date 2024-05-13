@@ -19,3 +19,5 @@ bool BlankScreen::draw(RenderTexture* render_texture) {
   EndTextureMode();
   return true;
 }
+
+std::list<std::string> BlankScreen::get_known_flags() const { return {}; }

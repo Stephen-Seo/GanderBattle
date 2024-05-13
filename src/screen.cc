@@ -156,15 +156,37 @@ void ScreenStack::unset_overlay_screen() {
   actions.emplace_back(Action::UNSET_OVERLAY_SCREEN);
 }
 
+std::list<std::string> ScreenStack::get_known_flags() const {
+  std::list<std::string> flag_names;
+  if (overlay_screen) {
+    auto overlay_flags = overlay_screen->get_known_flags();
+    flag_names.insert(flag_names.end(), overlay_flags.cbegin(),
+                      overlay_flags.cend());
+  }
+
+  for (const auto &screen : stack) {
+    auto flags = screen->get_known_flags();
+    flag_names.insert(flag_names.end(), flags.cbegin(), flags.cend());
+  }
+
+  return flag_names;
+}
+
 void ScreenStack::handle_pending_actions() {
   while (!actions.empty()) {
     switch (actions.front().action) {
       case Action::PUSH_SCREEN:
         stack.emplace_back(
             std::move(std::get<Screen::Ptr>(actions.front().screen)));
+        for (const auto &flag : stack.back()->get_known_flags()) {
+          shared_data.set_flag(flag, false);
+        }
         break;
       case Action::POP_SCREEN:
         if (!stack.empty()) {
+          for (const auto &flag : stack.back()->get_known_flags()) {
+            shared_data.unset_flag(flag);
+          }
           stack.pop_back();
         }
 #ifndef NDEBUG
@@ -179,19 +201,35 @@ void ScreenStack::handle_pending_actions() {
           std::cerr << "WARNING: Clearing an empty screen stack!\n";
         }
 #endif
+        for (const auto &screen : stack) {
+          for (const auto &flag : screen->get_known_flags()) {
+            shared_data.unset_flag(flag);
+          }
+        }
         stack.clear();
         break;
       case Action::CONSTRUCT_SCREEN:
         stack.emplace_back(
             std::get<std::function<Screen::Ptr(ScreenStack::Weak)> >(
                 actions.front().screen)(self_weak));
+        for (const auto &flag : stack.back()->get_known_flags()) {
+          shared_data.set_flag(flag, false);
+        }
         break;
       case Action::SET_OVERLAY_SCREEN:
         overlay_screen =
             std::get<std::function<Screen::Ptr(ScreenStack::Weak)> >(
                 actions.front().screen)(self_weak);
+        for (const auto &flag : overlay_screen->get_known_flags()) {
+          shared_data.set_flag(flag, false);
+        }
         break;
       case Action::UNSET_OVERLAY_SCREEN:
+        if (overlay_screen) {
+          for (const auto &flag : overlay_screen->get_known_flags()) {
+            shared_data.unset_flag(flag);
+          }
+        }
         overlay_screen.reset();
         break;
       case Action::NOP:

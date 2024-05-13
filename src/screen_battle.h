@@ -32,9 +32,11 @@ class BattleScreen : public Screen {
   BattleScreen(std::weak_ptr<ScreenStack> stack);
   virtual ~BattleScreen();
 
-  virtual bool update(float dt, bool screen_resized);
+  virtual bool update(float dt, bool screen_resized) override;
 
-  virtual bool draw(RenderTexture* render_texture);
+  virtual bool draw(RenderTexture* render_texture) override;
+
+  virtual std::list<std::string> get_known_flags() const override;
 
  private:
   Camera3D camera;
@@ -56,7 +58,7 @@ class BattleScreen : public Screen {
   float ground_scale;
   float ground_pos[4];
   bool sphere_collided;
-  bool enable_auto_movement;
+  bool prev_auto_move_flag_value;
 };
 
 #endif

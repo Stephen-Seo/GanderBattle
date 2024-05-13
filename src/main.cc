@@ -22,7 +22,7 @@ extern "C" {
 EM_BOOL resize_event_callback(int event_type, const EmscriptenUiEvent *event,
                               void *ud) {
   if (event_type == EMSCRIPTEN_EVENT_RESIZE) {
-    SetWindowSize(call_js_get_canvas_width(), call_js_get_canvas_height());
+    SetWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
   }
   return false;
 }

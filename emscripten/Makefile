@@ -46,6 +46,7 @@ ${OUTDIR}/GanderBattle.html: ./raylib/libraylib.a ./raylib/raylib.h ./raylib/ray
 		-sEXPORTED_FUNCTIONS=_main \
 		-sEXPORTED_RUNTIME_METHODS=ccall \
 		--preload-file ../res \
+		--shell-file shell.html \
 		${OTHER_FLAGS} \
 		${OBJECTS}
 	cd ${OUTDIR} && ln -sf GanderBattle.html index.html

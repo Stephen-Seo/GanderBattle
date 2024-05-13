@@ -2,6 +2,12 @@
 
 SharedData::SharedData() : outputs(), flags() {}
 
+void SharedData::init_flag(std::string name, bool value) {
+  if (auto iter = flags.find(name); iter == flags.end()) {
+    flags.insert(std::make_pair(name, value));
+  }
+}
+
 std::optional<bool> SharedData::set_flag(std::string name, bool value) {
   if (auto iter = flags.find(name); iter != flags.end()) {
     bool prev = iter->second;

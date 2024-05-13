@@ -10,6 +10,8 @@ class SharedData {
  public:
   SharedData();
 
+  /// Initializes flag if it does not exist.
+  void init_flag(std::string name, bool value = false);
   /// Returns prev value.
   std::optional<bool> set_flag(std::string name, bool value);
   /// Returns prev value.

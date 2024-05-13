@@ -179,7 +179,7 @@ void ScreenStack::handle_pending_actions() {
         stack.emplace_back(
             std::move(std::get<Screen::Ptr>(actions.front().screen)));
         for (const auto &flag : stack.back()->get_known_flags()) {
-          shared_data.set_flag(flag, false);
+          shared_data.init_flag(flag);
         }
         break;
       case Action::POP_SCREEN:
@@ -213,7 +213,7 @@ void ScreenStack::handle_pending_actions() {
             std::get<std::function<Screen::Ptr(ScreenStack::Weak)> >(
                 actions.front().screen)(self_weak));
         for (const auto &flag : stack.back()->get_known_flags()) {
-          shared_data.set_flag(flag, false);
+          shared_data.init_flag(flag);
         }
         break;
       case Action::SET_OVERLAY_SCREEN:
@@ -221,7 +221,7 @@ void ScreenStack::handle_pending_actions() {
             std::get<std::function<Screen::Ptr(ScreenStack::Weak)> >(
                 actions.front().screen)(self_weak);
         for (const auto &flag : overlay_screen->get_known_flags()) {
-          shared_data.set_flag(flag, false);
+          shared_data.init_flag(flag);
         }
         break;
       case Action::UNSET_OVERLAY_SCREEN:

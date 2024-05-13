@@ -30,8 +30,10 @@ class DebugScreen : public Screen {
   lua_State *lua_state;
   SharedData *shared;
   std::deque<std::string> console;
+  std::deque<std::string> history;
   std::string console_current;
   std::optional<int> console_x_offset;
+  std::optional<unsigned int> history_idx;
 };
 
 #endif

@@ -229,7 +229,8 @@ DebugScreen::DebugScreen(std::weak_ptr<ScreenStack> stack)
       shared(&stack.lock()->get_shared_data()),
       console{"Use \"help()\" for available functions."s},
       console_current("> "s),
-      console_x_offset(0) {
+      console_x_offset(0),
+      history_idx(std::nullopt) {
   luaL_requiref(lua_state, "string", luaopen_string, 1);
   luaL_requiref(lua_state, "table", luaopen_table, 1);
   luaL_requiref(lua_state, "math", luaopen_math, 1);
@@ -311,6 +312,11 @@ bool DebugScreen::update(float dt, bool screen_resized) {
       console.push_back(console_current);
 
       if (console_current.size() > 2) {
+        history.push_front(console_current.c_str());
+        while (history.size() > 25) {
+          history.pop_back();
+        }
+        history_idx = std::nullopt;
         // +1
         int result = luaL_loadstring(lua_state, console_current.c_str() + 2);
         if (result != LUA_OK) {
@@ -335,6 +341,23 @@ bool DebugScreen::update(float dt, bool screen_resized) {
       while (console.size() > 25) {
         // Limit size of history.
         console.pop_front();
+      }
+    } else if (IsKeyPressed(KEY_UP)) {
+      if (history_idx.has_value()) {
+        history_idx = history_idx.value() + 1;
+        if (history_idx.value() >= history.size()) {
+          history_idx = history_idx.value() - 1;
+        } else {
+          console_current = history[history_idx.value()];
+        }
+      } else if (!history.empty()) {
+        history_idx = 0;
+        console_current = history[0];
+      }
+    } else if (IsKeyPressed(KEY_DOWN)) {
+      if (history_idx.has_value() && history_idx.value() > 0) {
+        history_idx = history_idx.value() - 1;
+        console_current = history[history_idx.value()];
       }
     }
 

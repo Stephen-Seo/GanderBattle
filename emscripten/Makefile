@@ -8,6 +8,7 @@ endif
 SOURCES = \
 		../src/ems.cc \
 		../src/main.cc \
+		../src/constants.cc \
 		../src/screen.cc \
 		../src/shared_data.cc \
 		../src/screen_debug.cc \
@@ -17,6 +18,7 @@ SOURCES = \
 		../third_party/3d_collision_helpers/src/sc_sacd.cpp
 
 HEADERS = \
+		../src/constants.h \
 		../src/screen.h \
 		../src/shared_data.h \
 		../src/screen_debug.h \

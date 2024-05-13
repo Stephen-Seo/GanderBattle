@@ -3,6 +3,7 @@ project(GanderBattle CXX)
 
 set(GanderBattle_SOURCES
   "${CMAKE_CURRENT_SOURCE_DIR}/main.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/constants.cc"
   "${CMAKE_CURRENT_SOURCE_DIR}/ems.cc"
   "${CMAKE_CURRENT_SOURCE_DIR}/screen.cc"
   "${CMAKE_CURRENT_SOURCE_DIR}/shared_data.cc"

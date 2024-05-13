@@ -312,9 +312,11 @@ bool DebugScreen::update(float dt, bool screen_resized) {
       console.push_back(console_current);
 
       if (console_current.size() > 2) {
-        history.push_front(console_current.c_str());
-        while (history.size() > 25) {
-          history.pop_back();
+        if (history.empty() || history.front() != console_current) {
+          history.push_front(console_current);
+          while (history.size() > 25) {
+            history.pop_back();
+          }
         }
         history_idx = std::nullopt;
         // +1

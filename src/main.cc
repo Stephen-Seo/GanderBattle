@@ -36,6 +36,7 @@ void main_loop_update(void *ud) {
 
 int main(int argc, char **argv) {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Gander Battle");
+  InitAudioDevice();
 
 #ifdef NDEBUG
   SetTraceLogLevel(LOG_WARNING);

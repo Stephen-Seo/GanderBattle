@@ -50,6 +50,8 @@ class BattleScreen : public Screen {
   SC_SACD_AABB_Box floor_box;
   Model ground_model;
   Shader ground_shader;
+  Music battle_music;
+  std::vector<char> music_data;
   int ground_shader_scale_idx;
   int ground_shader_pos_idx;
   int ground_shader_other_pos_idx;
@@ -59,6 +61,7 @@ class BattleScreen : public Screen {
   float ground_pos[4];
   bool sphere_collided;
   bool prev_auto_move_flag_value;
+  bool prev_music_play_value;
 };
 
 #endif

@@ -8,5 +8,6 @@ constexpr int SCREEN_HEIGHT = 600;
 
 constexpr const char *const enable_console_flag = "enable_console";
 constexpr const char *const enable_auto_move_flag = "auto_movement";
+constexpr const char *const enable_music_flag = "music_playing";
 
 #endif

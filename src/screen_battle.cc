@@ -92,7 +92,8 @@ BattleScreen::BattleScreen(std::weak_ptr<ScreenStack> stack)
       sphere_touch_point{{0.0F, 0.0F, 0.0F}, {0.0F, 0.0F, 0.0F}},
       floor_box{0.0F, -1.0F, 0.0F, 10.0F, 2.0F, 10.0F},
       ground_pos{0.0F, 0.0F, 0.0F, 0.0F},
-      prev_auto_move_flag_value(false) {
+      prev_auto_move_flag_value(false),
+      prev_music_play_value(true) {
   camera.up.x = 0.0F;
   camera.up.y = 1.0F;
   camera.up.z = 0.0F;
@@ -108,6 +109,30 @@ BattleScreen::BattleScreen(std::weak_ptr<ScreenStack> stack)
   camera.position.z = CAMERA_ORBIT_XZ;
 
   camera.projection = CAMERA_PERSPECTIVE;
+
+  {
+    music_data = ResourceHandler::load("res/GanderBattle_00.mp3");
+    if (!music_data.empty()) {
+      battle_music = LoadMusicStreamFromMemory(
+          ".mp3", (const unsigned char *)music_data.data(),
+          (int)music_data.size());
+      if (IsMusicReady(battle_music)) {
+#ifndef NDEBUG
+        TraceLog(LOG_INFO, "battle_music is ready, playing...");
+#endif
+        battle_music.looping = true;
+        PlayMusicStream(battle_music);
+        stack.lock()->get_shared_data().init_flag(enable_music_flag, true);
+        prev_music_play_value = true;
+      } else {
+        stack.lock()->get_shared_data().init_flag(enable_music_flag, false);
+        prev_music_play_value = false;
+      }
+    } else {
+      stack.lock()->get_shared_data().init_flag(enable_music_flag, false);
+      prev_music_play_value = false;
+    }
+  }
 
   ground_model = LoadModelFromMesh(
       GenMeshPlane(GROUND_PLANE_SIZE, GROUND_PLANE_SIZE, 1, 1));
@@ -363,6 +388,24 @@ bool BattleScreen::update(float dt, bool screen_resized) {
   camera.target.z = sphere[0].z;
   camera.position.z = sphere[0].z + CAMERA_ORBIT_XZ;
 
+  if (auto flag_opt = shared_data.get_flag(enable_music_flag);
+      flag_opt.has_value() && prev_music_play_value != flag_opt.value()) {
+    prev_music_play_value = flag_opt.value();
+    if (flag_opt.value()) {
+      ResumeMusicStream(battle_music);
+#ifndef NDEBUG
+      TraceLog(LOG_INFO, "Resumed battle_music.");
+#endif
+    } else {
+      PauseMusicStream(battle_music);
+#ifndef NDEBUG
+      TraceLog(LOG_INFO, "Paused battle_music.");
+#endif
+    }
+  }
+
+  UpdateMusicStream(battle_music);
+
   return false;
 }
 
@@ -402,5 +445,5 @@ bool BattleScreen::draw(RenderTexture *render_texture) {
 }
 
 std::list<std::string> BattleScreen::get_known_flags() const {
-  return {enable_auto_move_flag};
+  return {enable_auto_move_flag, enable_music_flag};
 }

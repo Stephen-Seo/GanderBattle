@@ -5,6 +5,7 @@
 // Standard library includes.
 #include <cstdlib>
 #include <cstring>
+#include <format>
 
 // Third party includes.
 #include <raylib.h>
@@ -133,6 +134,27 @@ int lua_get_flag(lua_State *l) {
   return 1;
 }
 
+int lua_print_flags(lua_State *l) {
+  ScreenStack *ss = get_lua_screen_stack(l);
+
+  int top = lua_gettop(l);
+  for (int idx = 1; idx <= top; ++idx) {
+    if (lua_isstring(l, idx)) {
+      const char *l_c_string = lua_tostring(l, idx);
+      if (auto opt = ss->get_shared_data().get_flag(l_c_string);
+          opt.has_value()) {
+        ss->get_shared_data().outputs.push_back(std::format(
+            "\"{}\" is {}", l_c_string, (opt.value() ? "true" : "false")));
+      } else {
+        ss->get_shared_data().outputs.push_back(
+            std::format("\"{}\" does not exist.", l_c_string));
+      }
+    }
+  }
+
+  return 0;
+}
+
 int lua_set_flag(lua_State *l) {
   ScreenStack *ss = get_lua_screen_stack(l);
 
@@ -212,6 +234,7 @@ int lua_get_help(lua_State *l) {
   ss->get_shared_data().outputs.push_back("get_known_flags()");
   ss->get_shared_data().outputs.push_back("toggle_flag(\"name\")");
   ss->get_shared_data().outputs.push_back("get_flag(\"name\")");
+  ss->get_shared_data().outputs.push_back("print_flags(\"name\", ...)");
   ss->get_shared_data().outputs.push_back("set_flag(\"name\", boolean)");
   ss->get_shared_data().outputs.push_back("gen_print(...)");
   ss->get_shared_data().outputs.push_back("reset_stack()");
@@ -266,6 +289,11 @@ DebugScreen::DebugScreen(std::weak_ptr<ScreenStack> stack)
   lua_pushcfunction(lua_state, lua_get_flag);
   // -1
   lua_setglobal(lua_state, "get_flag");
+
+  // +1
+  lua_pushcfunction(lua_state, lua_print_flags);
+  // -1
+  lua_setglobal(lua_state, "print_flags");
 
   // +1
   lua_pushcfunction(lua_state, lua_set_flag);

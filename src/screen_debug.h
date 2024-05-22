@@ -34,6 +34,7 @@ class DebugScreen : public Screen {
   std::string console_current;
   std::optional<int> console_x_offset;
   std::optional<unsigned int> history_idx;
+  bool fps_enabled_cache;
 };
 
 #endif

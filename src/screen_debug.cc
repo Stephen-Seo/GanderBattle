@@ -253,7 +253,8 @@ DebugScreen::DebugScreen(std::weak_ptr<ScreenStack> stack)
       console{"Use \"help()\" for available functions."s},
       console_current("> "s),
       console_x_offset(0),
-      history_idx(std::nullopt) {
+      history_idx(std::nullopt),
+      fps_enabled_cache(true) {
   luaL_requiref(lua_state, "string", luaopen_string, 1);
   luaL_requiref(lua_state, "table", luaopen_table, 1);
   luaL_requiref(lua_state, "math", luaopen_math, 1);
@@ -314,6 +315,8 @@ DebugScreen::DebugScreen(std::weak_ptr<ScreenStack> stack)
   lua_pushcfunction(lua_state, lua_get_help);
   // -1
   lua_setglobal(lua_state, "help");
+
+  shared->init_flag(enable_fps_flag, true);
 }
 
 DebugScreen::~DebugScreen() { lua_close(lua_state); }
@@ -411,6 +414,9 @@ bool DebugScreen::update(float dt, bool screen_resized) {
     }
   }
 
+  // TODO: Maybe set up a way to not get this every frame?
+  fps_enabled_cache = shared->get_flag(enable_fps_flag).value();
+
   auto optb = shared->get_flag(enable_console_flag);
   return !(optb.has_value() && optb.value());
 }
@@ -431,8 +437,10 @@ bool DebugScreen::draw(RenderTexture *render_texture) {
       offset_y += 24;
     }
   } else {
-    std::string draw_text = std::to_string(GetFPS());
-    DrawText(draw_text.c_str(), 10, 10, 30, RAYWHITE);
+    if (fps_enabled_cache) {
+      std::string draw_text = std::to_string(GetFPS());
+      DrawText(draw_text.c_str(), 10, 10, 30, RAYWHITE);
+    }
   }
 
   EndTextureMode();
@@ -440,5 +448,5 @@ bool DebugScreen::draw(RenderTexture *render_texture) {
 }
 
 std::list<std::string> DebugScreen::get_known_flags() const {
-  return {enable_console_flag};
+  return {enable_console_flag, enable_fps_flag};
 }

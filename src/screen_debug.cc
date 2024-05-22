@@ -214,7 +214,7 @@ int lua_toggle_flag(lua_State *l) {
   }
 }
 
-int lua_get_known_flags(lua_State *l) {
+int lua_print_known_flags(lua_State *l) {
   ScreenStack *ss = get_lua_screen_stack(l);
 
   auto flags = ss->get_known_flags();
@@ -231,7 +231,7 @@ int lua_get_help(lua_State *l) {
 
   ss->get_shared_data().outputs.push_back("  Functions:");
   ss->get_shared_data().outputs.push_back("help()");
-  ss->get_shared_data().outputs.push_back("get_known_flags()");
+  ss->get_shared_data().outputs.push_back("print_known_flags()");
   ss->get_shared_data().outputs.push_back("toggle_flag(\"name\")");
   ss->get_shared_data().outputs.push_back("get_flag(\"name\")");
   ss->get_shared_data().outputs.push_back("print_flags(\"name\", ...)");
@@ -306,9 +306,9 @@ DebugScreen::DebugScreen(std::weak_ptr<ScreenStack> stack)
   lua_setglobal(lua_state, "toggle_flag");
 
   // +1
-  lua_pushcfunction(lua_state, lua_get_known_flags);
+  lua_pushcfunction(lua_state, lua_print_known_flags);
   // -1
-  lua_setglobal(lua_state, "get_known_flags");
+  lua_setglobal(lua_state, "print_known_flags");
 
   // +1
   lua_pushcfunction(lua_state, lua_get_help);

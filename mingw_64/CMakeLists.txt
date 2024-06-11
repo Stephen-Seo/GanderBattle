@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25.1)
-project(GanderBattle CXX)
+project(GanderBattle C CXX)
 
 set(GanderBattle_SOURCES
   "${CMAKE_CURRENT_SOURCE_DIR}/../src/main.cc"
@@ -83,6 +83,11 @@ target_include_directories(GanderBattle PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../
 if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/3d_collision_helpers/src/sc_sacd.cpp")
   message(FATAL_ERROR "3d_collision_helpers not found, please run \"git submodule update --init\"!")
 endif()
+
+add_library(duktape "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/duktape/src/duktape.c")
+target_link_libraries(GanderBattle PUBLIC duktape)
+target_include_directories(GanderBattle
+    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/duktape/src")
 
 if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ResourcePacker/src/CMakeLists.txt")
   message(WARNING "ResourcePacker not found, skipping... (ran \"git submodule update --init\"?)")

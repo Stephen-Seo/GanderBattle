@@ -4,6 +4,8 @@
 // Standard library includes.
 #include <deque>
 #include <optional>
+#include <variant>
+#include <bitset>
 
 // Third-party includes.
 
@@ -11,6 +13,8 @@
 extern "C" {
 #include "lua.h"
 }
+
+#include <duktape.h>
 
 // Local includes.
 #include "screen.h"
@@ -27,7 +31,19 @@ class DebugScreen : public Screen {
   virtual std::list<std::string> get_known_flags() const override;
 
  private:
-  lua_State *lua_state;
+  void cleanup_embedded_state();
+  void initialize_lua_state();
+  void initialize_js_state();
+
+  lua_State* get_lua_state();
+  duk_context* get_js_state();
+
+  std::variant<lua_State*, duk_context*> embedded_state;
+  /*
+   * 0 - If set, using lua. If unset, using javascript.
+   * 1 - If set, the embedded state has been previously initialized.
+   */
+  std::bitset<32> flags;
   SharedData *shared;
   std::deque<std::string> console;
   std::deque<std::string> history;

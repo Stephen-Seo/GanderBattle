@@ -5,6 +5,8 @@ else
 	OTHER_FLAGS = -Og ${COMMON_FLAGS}
 endif
 
+COMPILE_FLAGS = -I ./raylib -I ../third_party/duktape/src
+
 SOURCES = \
 		../src/ems.cc \
 		../src/main.cc \
@@ -14,7 +16,8 @@ SOURCES = \
 		../src/screen_blank.cc \
 		../src/screen_battle.cc \
 		../src/resource_handler.cc \
-		../third_party/3d_collision_helpers/src/sc_sacd.cpp
+		../third_party/3d_collision_helpers/src/sc_sacd.cpp \
+		../third_party/duktape/src/duktape.c
 
 HEADERS = \
 		../src/constants.h \
@@ -24,16 +27,18 @@ HEADERS = \
 		../src/screen_blank.h \
 		../src/screen_battle.h \
 		../src/resource_handler.h \
-		../third_party/3d_collision_helpers/src/sc_sacd.h
+		../third_party/3d_collision_helpers/src/sc_sacd.h \
+		../third_party/duktape/src/duktape.h
 
 OBJDIR = objdir
 OUTDIR = out
 
-OBJECTS = $(addprefix ${OBJDIR}/,$(subst ..,PREVDIR,$(subst .cpp,.cpp.o,$(subst .cc,.cc.o,${SOURCES}))))
+OBJECTS = $(addprefix ${OBJDIR}/,$(subst ..,PREVDIR,$(patsubst %.c,%.c.o,$(subst .cpp,.cpp.o,$(subst .cc,.cc.o,${SOURCES})))))
 
 EMSDK_ENV_SH ?= ${HOME}/git/emsdk/emsdk_env.sh
 
 CXX = source ${EMSDK_ENV_SH} &>/dev/null && em++
+CC = source ${EMSDK_ENV_SH} &>/dev/null && emcc
 
 all: ${OUTDIR}/GanderBattle.html
 
@@ -54,10 +59,13 @@ ${OUTDIR}/GanderBattle.html: ./raylib/libraylib.a ./raylib/raylib.h ./raylib/ray
 
 ${OBJDIR}/%.cc.o: $$(subst PREVDIR,..,%.cc) ${HEADERS}
 	@mkdir -p "$(dir $@)"
-	${CXX} -std=c++23 -I ./raylib -c ${OTHER_FLAGS} -o $@ $<
+	${CXX} -std=c++23 ${COMPILE_FLAGS} -c ${OTHER_FLAGS} -o $@ $<
 ${OBJDIR}/%.cpp.o: $$(subst PREVDIR,..,%.cpp) ${HEADERS}
 	@mkdir -p "$(dir $@)"
-	${CXX} -std=c++23 -I ./raylib -c ${OTHER_FLAGS} -o $@ $<
+	${CXX} -std=c++23 ${COMPILE_FLAGS} -c ${OTHER_FLAGS} -o $@ $<
+${OBJDIR}/%.c.o: $$(subst PREVDIR,..,%.c) ${HEADERS}
+	@mkdir -p "$(dir $@)"
+	${CC} ${COMPILE_FLAGS} -c ${OTHER_FLAGS} -o $@ $<
 
 .PHONY: clean
 

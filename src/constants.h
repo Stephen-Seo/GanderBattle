@@ -10,5 +10,6 @@ constexpr const char *const enable_console_flag = "enable_console";
 constexpr const char *const enable_fps_flag = "enable_fps";
 constexpr const char *const enable_auto_move_flag = "auto_movement";
 constexpr const char *const enable_music_flag = "music_playing";
+constexpr const char *const toggle_embedded_flag = "toggle_embedded";
 
 #endif

@@ -1,4 +1,5 @@
 #include "screen_debug.h"
+
 #include "duktape.h"
 
 // Standard library includes.
@@ -253,15 +254,18 @@ int lua_get_help(lua_State *l) {
 // BEGIN Duktape/JS stuff
 // #############################################################################
 
-constexpr const char *const duktape_hidden_symbol_screen_stack = "\xFFgander_screen_stack";
-constexpr const char *const duktape_hidden_symbol_ss_object = "gander_screen_stack_object_d208f8c29833afefe848b0d3e6c40418c5bec16f";
+constexpr const char *const duktape_hidden_symbol_screen_stack =
+    "\xFFgander_screen_stack";
+constexpr const char *const duktape_hidden_symbol_ss_object =
+    "gander_screen_stack_object_d208f8c29833afefe848b0d3e6c40418c5bec16f";
 
 ScreenStack *get_js_screen_stack(duk_context *ctx) {
   // +1
   duk_get_global_string(ctx, duktape_hidden_symbol_ss_object);
   // +1
   duk_get_prop_string(ctx, -1, duktape_hidden_symbol_screen_stack);
-  ScreenStack *ss_ptr = reinterpret_cast<ScreenStack*>(duk_get_pointer(ctx, -1));
+  ScreenStack *ss_ptr =
+      reinterpret_cast<ScreenStack *>(duk_get_pointer(ctx, -1));
   // -2
   duk_pop_2(ctx);
 
@@ -462,7 +466,8 @@ duk_ret_t js_get_help(duk_context *ctx) {
 }
 
 // Helper to set screen-stack-ptr and register c_func.
-void js_register_c_func(duk_context *ctx, duk_ret_t(*c_func)(duk_context *ctx), duk_idx_t nargs, const char *name) {
+void js_register_c_func(duk_context *ctx, duk_ret_t (*c_func)(duk_context *ctx),
+                        duk_idx_t nargs, const char *name) {
   // +1
   duk_push_c_function(ctx, c_func, nargs);
   // -1
@@ -490,9 +495,7 @@ DebugScreen::DebugScreen(std::weak_ptr<ScreenStack> stack)
   shared->init_flag(enable_fps_flag, true);
 }
 
-DebugScreen::~DebugScreen() {
-  cleanup_embedded_state();
-}
+DebugScreen::~DebugScreen() { cleanup_embedded_state(); }
 
 bool DebugScreen::update(float dt, bool screen_resized) {
   bool just_enabled = false;
@@ -525,7 +528,8 @@ bool DebugScreen::update(float dt, bool screen_resized) {
         history_idx = std::nullopt;
         if (flags.test(0)) {
           // +1
-          int result = luaL_loadstring(get_lua_state(), console_current.c_str() + 2);
+          int result =
+              luaL_loadstring(get_lua_state(), console_current.c_str() + 2);
           if (result != LUA_OK) {
             console.push_back(lua_tostring(get_lua_state(), -1));
             // -1
@@ -544,12 +548,14 @@ bool DebugScreen::update(float dt, bool screen_resized) {
           duk_push_string(get_js_state(), console_current.c_str() + 2);
           // +1, -1
           if (duk_peval(get_js_state()) != 0) {
-            console.push_back(std::format("{}", duk_safe_to_string(get_js_state(), -1)));
+            console.push_back(
+                std::format("{}", duk_safe_to_string(get_js_state(), -1)));
 #ifndef NDEBUG
             std::clog << duk_safe_to_string(get_js_state(), -1) << '\n';
 #endif
           } else {
-/*            console.push_back(std::format("{}", duk_safe_to_string(get_js_state(), -1)));*/
+            /*            console.push_back(std::format("{}",
+             * duk_safe_to_string(get_js_state(), -1)));*/
           }
           // -1
           duk_pop(get_js_state());
@@ -757,12 +763,15 @@ void DebugScreen::initialize_js_state() {
 
   js_register_c_func(get_js_state(), js_reset_stack, 0, "reset_stack");
   js_register_c_func(get_js_state(), js_clear_stack, 0, "clear_stack");
-  js_register_c_func(get_js_state(), js_generic_print, DUK_VARARGS, "gen_print");
+  js_register_c_func(get_js_state(), js_generic_print, DUK_VARARGS,
+                     "gen_print");
   js_register_c_func(get_js_state(), js_get_flag, 1, "get_flag");
-  js_register_c_func(get_js_state(), js_print_flags, DUK_VARARGS, "print_flags");
+  js_register_c_func(get_js_state(), js_print_flags, DUK_VARARGS,
+                     "print_flags");
   js_register_c_func(get_js_state(), js_set_flag, 2, "set_flag");
   js_register_c_func(get_js_state(), js_toggle_flag, 1, "toggle_flag");
-  js_register_c_func(get_js_state(), js_print_known_flags, 0, "print_known_flags");
+  js_register_c_func(get_js_state(), js_print_known_flags, 0,
+                     "print_known_flags");
   js_register_c_func(get_js_state(), js_get_help, 0, "help");
 
   flags.set(1);
@@ -772,14 +781,14 @@ void DebugScreen::initialize_js_state() {
 
 lua_State *DebugScreen::get_lua_state() {
   if (flags.test(0)) {
-    return std::get<lua_State*>(embedded_state);
+    return std::get<lua_State *>(embedded_state);
   }
   return nullptr;
 }
 
 duk_context *DebugScreen::get_js_state() {
   if (!flags.test(0)) {
-    return std::get<duk_context*>(embedded_state);
+    return std::get<duk_context *>(embedded_state);
   }
   return nullptr;
 }

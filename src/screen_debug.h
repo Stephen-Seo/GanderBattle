@@ -2,10 +2,10 @@
 #define SEODISPARATE_COM_GANDER_BATTLE_SCREEN_DEBUG_H_
 
 // Standard library includes.
+#include <bitset>
 #include <deque>
 #include <optional>
 #include <variant>
-#include <bitset>
 
 // Third-party includes.
 
@@ -26,7 +26,7 @@ class DebugScreen : public Screen {
 
   virtual bool update(float dt, bool screen_resized) override;
 
-  virtual bool draw(RenderTexture *render_texture) override;
+  virtual bool draw(RenderTexture* render_texture) override;
 
   virtual std::list<std::string> get_known_flags() const override;
 
@@ -44,7 +44,7 @@ class DebugScreen : public Screen {
    * 1 - If set, the embedded state has been previously initialized.
    */
   std::bitset<32> flags;
-  SharedData *shared;
+  SharedData* shared;
   std::deque<std::string> console;
   std::deque<std::string> history;
   std::string console_current;

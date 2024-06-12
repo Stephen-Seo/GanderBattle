@@ -1,7 +1,5 @@
 #include "screen_debug.h"
 
-#include "duktape.h"
-
 // Standard library includes.
 #include <cstdlib>
 #include <cstring>
@@ -554,7 +552,7 @@ bool DebugScreen::update(float dt, bool screen_resized) {
             std::clog << duk_safe_to_string(get_js_state(), -1) << '\n';
 #endif
           } else {
-            /*            console.push_back(std::format("{}",
+            /* console.push_back(std::format("{}",
              * duk_safe_to_string(get_js_state(), -1)));*/
           }
           // -1

@@ -1,11 +1,11 @@
-COMMON_FLAGS = -I../third_party/3d_collision_helpers/src -I../third_party/lua
+COMMON_FLAGS =
 ifdef RELEASE
 	OTHER_FLAGS = -DNDEBUG -O3 ${COMMON_FLAGS}
 else
 	OTHER_FLAGS = -Og ${COMMON_FLAGS}
 endif
 
-COMPILE_FLAGS = -I ./raylib -I ../third_party/duktape/src
+COMPILE_FLAGS = -I./raylib -I../third_party/duktape/src -I../third_party/3d_collision_helpers/src -I../third_party/lua
 
 SOURCES = \
 		../src/ems.cc \

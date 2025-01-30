@@ -116,7 +116,7 @@ BattleScreen::BattleScreen(std::weak_ptr<ScreenStack> stack)
       battle_music = LoadMusicStreamFromMemory(
           ".mp3", (const unsigned char *)music_data.data(),
           (int)music_data.size());
-      if (IsMusicReady(battle_music)) {
+      if (IsMusicValid(battle_music)) {
 #ifndef NDEBUG
         TraceLog(LOG_INFO, "battle_music is ready, playing...");
 #endif
@@ -180,7 +180,7 @@ BattleScreen::BattleScreen(std::weak_ptr<ScreenStack> stack)
 
 #ifndef NDEBUG
   TraceLog(LOG_INFO, "Shader is ready: %s",
-           (IsShaderReady(ground_shader) ? "yes" : "no"));
+           (IsShaderValid(ground_shader) ? "yes" : "no"));
   TraceLog(LOG_INFO, "Initialized BattleScreen.");
 #endif
 }

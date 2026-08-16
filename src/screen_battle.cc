@@ -382,11 +382,40 @@ bool BattleScreen::update(float dt, bool screen_resized) {
   ground_pos[2] = sphere[1].x;
   ground_pos[3] = sphere[1].z;
 
-  // TODO DEBUG
-  camera.target.x = sphere[0].x;
-  camera.position.x = sphere[0].x;
-  camera.target.z = sphere[0].z;
-  camera.position.z = sphere[0].z + CAMERA_ORBIT_XZ;
+  if (auto flag_opt = shared_data.get_flag(combat_camera_flag);
+      flag_opt.has_value() && flag_opt.value()) {
+    float x_diff = sphere[0].x - sphere[1].x;
+    float z_diff = sphere[0].z - sphere[1].z;
+
+    x_diff /= 2.0F;
+    z_diff /= 2.0F;
+
+    camera.target.x = sphere[1].x + x_diff;
+    camera.target.z = sphere[1].z + z_diff;
+
+    float x_rotated = z_diff;
+    float z_rotated = -x_diff;
+
+    float rot_magnitude =
+        std::sqrt(x_rotated * x_rotated + z_rotated * z_rotated);
+
+    float x_r_unit = x_rotated / rot_magnitude;
+    float z_r_unit = z_rotated / rot_magnitude;
+
+    camera.position.x =
+        camera.target.x + x_r_unit * rot_magnitude * COMBAT_CAMERA_DIST;
+    camera.position.z =
+        camera.target.z + z_r_unit * rot_magnitude * COMBAT_CAMERA_DIST;
+    camera.position.y = COMBAT_CAMERA_HEIGHT;
+  } else {
+    // TODO DEBUG
+    camera.target.x = sphere[0].x;
+    camera.position.x = sphere[0].x;
+    camera.target.z = sphere[0].z;
+    camera.position.z = sphere[0].z + CAMERA_ORBIT_XZ;
+
+    camera.position.y = CAMERA_HEIGHT;
+  }
 
   if (auto flag_opt = shared_data.get_flag(enable_music_flag);
       flag_opt.has_value() && prev_music_play_value != flag_opt.value()) {
@@ -445,5 +474,5 @@ bool BattleScreen::draw(RenderTexture *render_texture) {
 }
 
 std::list<std::string> BattleScreen::get_known_flags() const {
-  return {enable_auto_move_flag, enable_music_flag};
+  return {enable_auto_move_flag, enable_music_flag, combat_camera_flag};
 }

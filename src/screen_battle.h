@@ -10,6 +10,8 @@
 // Constants.
 constexpr float CAMERA_ORBIT_TIME = 20.0F;
 constexpr float CAMERA_HEIGHT = 3.0F;
+constexpr float COMBAT_CAMERA_HEIGHT = 0.25F;
+constexpr float COMBAT_CAMERA_DIST = 3.0F;
 constexpr float CAMERA_ORBIT_XZ = 5.0F;
 
 constexpr float SPHERE_DROP_ACC = 9.8F;

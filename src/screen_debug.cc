@@ -672,7 +672,7 @@ void DebugScreen::cleanup_embedded_state() {
 void DebugScreen::initialize_lua_state() {
   cleanup_embedded_state();
 
-  embedded_state = lua_newstate(alloc_for_lua, stack.lock().get());
+  embedded_state = lua_newstate(alloc_for_lua, stack.lock().get(), 0x1234);
   flags.set(0);
 
   luaL_requiref(get_lua_state(), "string", luaopen_string, 1);

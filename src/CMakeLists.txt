@@ -91,7 +91,7 @@ else()
     target_link_libraries(ResourcePack PUBLIC ResourcePacker-s)
     target_include_directories(ResourcePack PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/ResourcePacker/src")
 
-    add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/data" COMMAND "${CMAKE_CURRENT_BINARY_DIR}/ResourcePack" ARGS "${CMAKE_CURRENT_BINARY_DIR}/data" "${CMAKE_CURRENT_BINARY_DIR}/../res" DEPENDS ResourcePack)
+    add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/data" COMMAND "${CMAKE_CURRENT_BINARY_DIR}/ResourcePack" ARGS "${CMAKE_CURRENT_BINARY_DIR}/data" "${CMAKE_CURRENT_SOURCE_DIR}/../res" DEPENDS ResourcePack)
     add_custom_target(ResourcePackData DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/data")
     add_dependencies(GanderBattle ResourcePackData)
   endif()

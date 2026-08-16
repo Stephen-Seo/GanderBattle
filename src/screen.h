@@ -28,17 +28,17 @@ class Screen {
   virtual ~Screen() {}
 
   // No copy.
-  Screen(const Screen&) = delete;
-  Screen& operator=(const Screen&) = delete;
+  Screen(const Screen &) = delete;
+  Screen &operator=(const Screen &) = delete;
 
   // Allow move.
-  Screen(Screen&&) = default;
-  Screen& operator=(Screen&&) = default;
+  Screen(Screen &&) = default;
+  Screen &operator=(Screen &&) = default;
 
   /// Return true if next screen should be updated.
   virtual bool update(float dt, bool screen_resized) = 0;
   /// Return true if next screen should be drawn.
-  virtual bool draw(RenderTexture* render_texture) = 0;
+  virtual bool draw(RenderTexture *render_texture) = 0;
 
   virtual std::list<std::string> get_known_flags() const = 0;
 
@@ -66,18 +66,18 @@ class ScreenStack {
   struct PendingAction {
     PendingAction();
     PendingAction(Action action);
-    PendingAction(Screen::Ptr&&);
-    PendingAction(std::function<Screen::Ptr(ScreenStack::Weak)>&&);
+    PendingAction(Screen::Ptr &&);
+    PendingAction(std::function<Screen::Ptr(ScreenStack::Weak)> &&);
     PendingAction(Action action,
-                  std::function<Screen::Ptr(ScreenStack::Weak)>&&);
+                  std::function<Screen::Ptr(ScreenStack::Weak)> &&);
 
     // No copy.
-    PendingAction(const PendingAction&) = delete;
-    PendingAction& operator=(const PendingAction&) = delete;
+    PendingAction(const PendingAction &) = delete;
+    PendingAction &operator=(const PendingAction &) = delete;
 
     // Allow move.
-    PendingAction(PendingAction&&) = default;
-    PendingAction& operator=(PendingAction&&) = default;
+    PendingAction(PendingAction &&) = default;
+    PendingAction &operator=(PendingAction &&) = default;
 
     std::variant<Screen::Ptr, std::function<Screen::Ptr(ScreenStack::Weak)> >
         screen;
@@ -90,17 +90,17 @@ class ScreenStack {
   ~ScreenStack();
 
   // No copy.
-  ScreenStack(const ScreenStack&) = delete;
-  ScreenStack& operator=(const ScreenStack&) = delete;
+  ScreenStack(const ScreenStack &) = delete;
+  ScreenStack &operator=(const ScreenStack &) = delete;
 
   // Allow move.
-  ScreenStack(ScreenStack&&) = default;
-  ScreenStack& operator=(ScreenStack&&) = default;
+  ScreenStack(ScreenStack &&) = default;
+  ScreenStack &operator=(ScreenStack &&) = default;
 
   void update(float dt);
   void draw();
 
-  void push_screen(Screen::Ptr&& screen);
+  void push_screen(Screen::Ptr &&screen);
 
   template <typename SubScreen>
   void push_screen();
@@ -117,8 +117,8 @@ class ScreenStack {
 
   void reset_render_texture();
 
-  SharedData& get_shared_data();
-  const SharedData& get_shared_data() const;
+  SharedData &get_shared_data();
+  const SharedData &get_shared_data() const;
 
   bool is_overlay_screen_set() const;
 

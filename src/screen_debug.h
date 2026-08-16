@@ -26,7 +26,7 @@ class DebugScreen : public Screen {
 
   virtual bool update(float dt, bool screen_resized) override;
 
-  virtual bool draw(RenderTexture* render_texture) override;
+  virtual bool draw(RenderTexture *render_texture) override;
 
   virtual std::list<std::string> get_known_flags() const override;
 
@@ -35,16 +35,16 @@ class DebugScreen : public Screen {
   void initialize_lua_state();
   void initialize_js_state();
 
-  lua_State* get_lua_state();
-  duk_context* get_js_state();
+  lua_State *get_lua_state();
+  duk_context *get_js_state();
 
-  std::variant<lua_State*, duk_context*> embedded_state;
+  std::variant<lua_State *, duk_context *> embedded_state;
   /*
    * 0 - If set, using lua. If unset, using javascript.
    * 1 - If set, the embedded state has been previously initialized.
    */
   std::bitset<32> flags;
-  SharedData* shared;
+  SharedData *shared;
   std::deque<std::string> console;
   std::deque<std::string> history;
   std::string console_current;

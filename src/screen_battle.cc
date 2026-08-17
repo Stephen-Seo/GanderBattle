@@ -483,6 +483,9 @@ bool BattleScreen::update(float dt, bool screen_resized) {
     camera.target.x = sphere[0].x + x_diff;
     camera.target.z = sphere[0].z + z_diff;
 
+    float target_y = (sphere[0].y + sphere[1].y) / 2.0F;
+    camera.target.y += (target_y - camera.target.y) / COMBAT_CAM_Y_FACTOR;
+
     camera.position.x =
         camera.target.x + x_r_unit * rot_magnitude * COMBAT_CAMERA_DIST;
     camera.position.z =

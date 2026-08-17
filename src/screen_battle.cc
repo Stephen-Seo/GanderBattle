@@ -4,7 +4,6 @@
 
 // Standard library includes.
 #include <cmath>
-#include <numbers>
 
 #ifndef NDEBUG
 #include <iostream>
@@ -192,6 +191,35 @@ BattleScreen::~BattleScreen() {
 
 bool BattleScreen::update(float dt, bool screen_resized) {
   auto &shared_data = stack.lock()->get_shared_data();
+
+  bool combat_camera_enabled;
+  {
+    auto flag_opt = shared_data.get_flag(combat_camera_flag);
+    combat_camera_enabled = flag_opt.has_value() && flag_opt.value();
+  }
+
+  float x_diff;
+  float z_diff;
+  float x_r_unit;
+  float z_r_unit;
+  float rot_magnitude;
+
+  if (combat_camera_enabled) {
+    x_diff = sphere[1].x - sphere[0].x;
+    z_diff = sphere[1].z - sphere[0].z;
+
+    x_diff /= 2.0F;
+    z_diff /= 2.0F;
+
+    float x_rotated = -z_diff;
+    float z_rotated = x_diff;
+
+    rot_magnitude = std::sqrt(x_rotated * x_rotated + z_rotated * z_rotated);
+
+    x_r_unit = x_rotated / rot_magnitude;
+    z_r_unit = z_rotated / rot_magnitude;
+  }
+
   if (auto flag_opt = shared_data.get_flag(enable_auto_move_flag);
       flag_opt.has_value() && prev_auto_move_flag_value != flag_opt.value()) {
     prev_auto_move_flag_value = flag_opt.value();
@@ -242,36 +270,105 @@ bool BattleScreen::update(float dt, bool screen_resized) {
 
   if (auto flag_opt = shared_data.get_flag(enable_auto_move_flag);
       !flag_opt.has_value() || !flag_opt.value()) {
-    if (IsKeyDown(KEY_D)) {
-      sphere_vel[0].x = MOVEMENT_SPEED;
-    } else if (IsKeyDown(KEY_A)) {
-      sphere_vel[0].x = -MOVEMENT_SPEED;
-    } else {
-      sphere_vel[0].x = 0.0F;
-    }
+    if (combat_camera_enabled) {
+      float x_r_unit_45 = x_r_unit * SQRT_2D2 + z_r_unit * SQRT_2D2;
+      float z_r_unit_45 = -x_r_unit * SQRT_2D2 + z_r_unit * SQRT_2D2;
 
-    if (IsKeyDown(KEY_W)) {
-      sphere_vel[0].z = -MOVEMENT_SPEED;
-    } else if (IsKeyDown(KEY_S)) {
-      sphere_vel[0].z = MOVEMENT_SPEED;
-    } else {
-      sphere_vel[0].z = 0.0F;
-    }
+      float x_r_unit_90 = -z_r_unit;
+      float z_r_unit_90 = x_r_unit;
 
-    if (IsKeyDown(KEY_RIGHT)) {
-      sphere_vel[1].x = MOVEMENT_SPEED;
-    } else if (IsKeyDown(KEY_LEFT)) {
-      sphere_vel[1].x = -MOVEMENT_SPEED;
-    } else {
-      sphere_vel[1].x = 0.0F;
-    }
+      float x_r_unit_135 = x_r_unit * -SQRT_2D2 + z_r_unit * SQRT_2D2;
+      float z_r_unit_135 = -x_r_unit * SQRT_2D2 + z_r_unit * -SQRT_2D2;
 
-    if (IsKeyDown(KEY_UP)) {
-      sphere_vel[1].z = -MOVEMENT_SPEED;
-    } else if (IsKeyDown(KEY_DOWN)) {
-      sphere_vel[1].z = MOVEMENT_SPEED;
+      if (IsKeyDown(KEY_D) && IsKeyDown(KEY_S)) {
+        sphere_vel[0].x = MOVEMENT_SPEED * x_r_unit_45;
+        sphere_vel[0].z = MOVEMENT_SPEED * z_r_unit_45;
+      } else if (IsKeyDown(KEY_D) && IsKeyDown(KEY_W)) {
+        sphere_vel[0].x = MOVEMENT_SPEED * x_r_unit_135;
+        sphere_vel[0].z = MOVEMENT_SPEED * z_r_unit_135;
+      } else if (IsKeyDown(KEY_A) && IsKeyDown(KEY_S)) {
+        sphere_vel[0].x = -MOVEMENT_SPEED * x_r_unit_135;
+        sphere_vel[0].z = -MOVEMENT_SPEED * z_r_unit_135;
+      } else if (IsKeyDown(KEY_A) && IsKeyDown(KEY_W)) {
+        sphere_vel[0].x = -MOVEMENT_SPEED * x_r_unit_45;
+        sphere_vel[0].z = -MOVEMENT_SPEED * z_r_unit_45;
+      } else if (IsKeyDown(KEY_D)) {
+        sphere_vel[0].x = -MOVEMENT_SPEED * x_r_unit_90;
+        sphere_vel[0].z = -MOVEMENT_SPEED * z_r_unit_90;
+      } else if (IsKeyDown(KEY_A)) {
+        sphere_vel[0].x = MOVEMENT_SPEED * x_r_unit_90;
+        sphere_vel[0].z = MOVEMENT_SPEED * z_r_unit_90;
+      } else if (IsKeyDown(KEY_S)) {
+        sphere_vel[0].x = MOVEMENT_SPEED * x_r_unit;
+        sphere_vel[0].z = MOVEMENT_SPEED * z_r_unit;
+      } else if (IsKeyDown(KEY_W)) {
+        sphere_vel[0].x = -MOVEMENT_SPEED * x_r_unit;
+        sphere_vel[0].z = -MOVEMENT_SPEED * z_r_unit;
+      } else {
+        sphere_vel[0].x = 0.0F;
+        sphere_vel[0].z = 0.0F;
+      }
+
+      if (IsKeyDown(KEY_RIGHT) && IsKeyDown(KEY_DOWN)) {
+        sphere_vel[1].x = MOVEMENT_SPEED * x_r_unit_45;
+        sphere_vel[1].z = MOVEMENT_SPEED * z_r_unit_45;
+      } else if (IsKeyDown(KEY_RIGHT) && IsKeyDown(KEY_UP)) {
+        sphere_vel[1].x = MOVEMENT_SPEED * x_r_unit_135;
+        sphere_vel[1].z = MOVEMENT_SPEED * z_r_unit_135;
+      } else if (IsKeyDown(KEY_DOWN) && IsKeyDown(KEY_LEFT)) {
+        sphere_vel[1].x = -MOVEMENT_SPEED * x_r_unit_135;
+        sphere_vel[1].z = -MOVEMENT_SPEED * z_r_unit_135;
+      } else if (IsKeyDown(KEY_UP) && IsKeyDown(KEY_LEFT)) {
+        sphere_vel[1].x = -MOVEMENT_SPEED * x_r_unit_45;
+        sphere_vel[1].z = -MOVEMENT_SPEED * z_r_unit_45;
+      } else if (IsKeyDown(KEY_LEFT)) {
+        sphere_vel[1].x = MOVEMENT_SPEED * x_r_unit_90;
+        sphere_vel[1].z = MOVEMENT_SPEED * z_r_unit_90;
+      } else if (IsKeyDown(KEY_RIGHT)) {
+        sphere_vel[1].x = -MOVEMENT_SPEED * x_r_unit_90;
+        sphere_vel[1].z = -MOVEMENT_SPEED * z_r_unit_90;
+      } else if (IsKeyDown(KEY_DOWN)) {
+        sphere_vel[1].x = MOVEMENT_SPEED * x_r_unit;
+        sphere_vel[1].z = MOVEMENT_SPEED * z_r_unit;
+      } else if (IsKeyDown(KEY_UP)) {
+        sphere_vel[1].x = -MOVEMENT_SPEED * x_r_unit;
+        sphere_vel[1].z = -MOVEMENT_SPEED * z_r_unit;
+      } else {
+        sphere_vel[1].x = 0.0F;
+        sphere_vel[1].z = 0.0F;
+      }
     } else {
-      sphere_vel[1].z = 0.0F;
+      if (IsKeyDown(KEY_D)) {
+        sphere_vel[0].x = MOVEMENT_SPEED;
+      } else if (IsKeyDown(KEY_A)) {
+        sphere_vel[0].x = -MOVEMENT_SPEED;
+      } else {
+        sphere_vel[0].x = 0.0F;
+      }
+
+      if (IsKeyDown(KEY_W)) {
+        sphere_vel[0].z = -MOVEMENT_SPEED;
+      } else if (IsKeyDown(KEY_S)) {
+        sphere_vel[0].z = MOVEMENT_SPEED;
+      } else {
+        sphere_vel[0].z = 0.0F;
+      }
+
+      if (IsKeyDown(KEY_RIGHT)) {
+        sphere_vel[1].x = MOVEMENT_SPEED;
+      } else if (IsKeyDown(KEY_LEFT)) {
+        sphere_vel[1].x = -MOVEMENT_SPEED;
+      } else {
+        sphere_vel[1].x = 0.0F;
+      }
+
+      if (IsKeyDown(KEY_UP)) {
+        sphere_vel[1].z = -MOVEMENT_SPEED;
+      } else if (IsKeyDown(KEY_DOWN)) {
+        sphere_vel[1].z = MOVEMENT_SPEED;
+      } else {
+        sphere_vel[1].z = 0.0F;
+      }
     }
   }
   // camera_orbit_timer += dt;
@@ -382,25 +479,9 @@ bool BattleScreen::update(float dt, bool screen_resized) {
   ground_pos[2] = sphere[1].x;
   ground_pos[3] = sphere[1].z;
 
-  if (auto flag_opt = shared_data.get_flag(combat_camera_flag);
-      flag_opt.has_value() && flag_opt.value()) {
-    float x_diff = sphere[0].x - sphere[1].x;
-    float z_diff = sphere[0].z - sphere[1].z;
-
-    x_diff /= 2.0F;
-    z_diff /= 2.0F;
-
-    camera.target.x = sphere[1].x + x_diff;
-    camera.target.z = sphere[1].z + z_diff;
-
-    float x_rotated = z_diff;
-    float z_rotated = -x_diff;
-
-    float rot_magnitude =
-        std::sqrt(x_rotated * x_rotated + z_rotated * z_rotated);
-
-    float x_r_unit = x_rotated / rot_magnitude;
-    float z_r_unit = z_rotated / rot_magnitude;
+  if (combat_camera_enabled) {
+    camera.target.x = sphere[0].x + x_diff;
+    camera.target.z = sphere[0].z + z_diff;
 
     camera.position.x =
         camera.target.x + x_r_unit * rot_magnitude * COMBAT_CAMERA_DIST;
